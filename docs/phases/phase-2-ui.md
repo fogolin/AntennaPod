@@ -57,7 +57,7 @@ This workspace can't build Android (see [findings/environment.md](../findings/en
 
 ## How to test
 
-Install the APK from this PR's CI run (Actions → the run → Artifacts → `app-play-debug.apk`). Use the debug build with your imported database (see phase 1).
+Install the APK from [CI run 36329200192](https://github.com/fogolin/AntennaPod/actions/runs/36329200192) (Artifacts → `app-play-debug.apk`; it downloads as a zip). Use the debug build with your imported database (see phase 1).
 
 | # | Scenario | Expected |
 |---|---|---|
@@ -97,6 +97,14 @@ Install the APK from this PR's CI run (Actions → the run → Artifacts → `ap
   - click Confirm with `scrollTo(), click()`;
   - wait up to 10 s instead of 3 s. The helpers poll every 50 ms, so this costs nothing when things are fast.
 
-**CI run 2:** see the PR checks.
+**CI run 2** ([36329200192](https://github.com/fogolin/AntennaPod/actions/runs/36329200192), commit `ae6d4b9`, with the hardened test): **all green.**
+
+| Check | Result |
+|---|---|
+| Static analysis (XML format, checkstyle, lint) | pass |
+| Unit tests PlayDebug, PlayRelease, FreeRelease | pass |
+| Emulator tests API 23, 30, 36, debug and release (including `testCreateRenameAndDeleteQueue`) | pass (5/5) |
+
+This confirms the API 23 debug failure came from the test, not the app. The artifact `app-play-debug.apk` (about 21 MB) is attached to this run.
 
 - **Manual test:** pending the user.
