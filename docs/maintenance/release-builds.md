@@ -6,7 +6,9 @@ Every time `multiple-queues` changes (you merge a PR), GitHub builds a signed re
 
 Do this on your own computer, in your local clone of the fork. The key only leaves your machine as GitHub secrets.
 
-**You need:** `keytool`, which comes with any Java JDK and with Android Studio (`<Android Studio>/jbr/bin`). Run everything below in a bash shell: Linux, macOS, WSL, or Git Bash on Windows.
+**You need:** `keytool`, which comes with any Java runtime and with Android Studio (`<Android Studio>/jbr/bin`). On Ubuntu, Debian or WSL, install it with `sudo apt install -y default-jre-headless`. Run everything below in a bash shell: Linux, macOS, WSL, or Git Bash on Windows.
+
+**On WSL with the clone on a Windows drive** (`/mnt/...`): `.env` is written there, and Windows drives usually ignore Linux file permissions. It's still git-ignored, but any Windows program running as you can read it. The keystore itself goes to your Linux home, where the permissions do apply.
 
 ### 1. Create the key and `.env`
 
