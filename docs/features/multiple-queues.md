@@ -1,0 +1,46 @@
+# Feature: multiple queues
+
+- **Upstream issue:** #2648
+- **Status:** in progress. Phase 1 (storage) is implemented. Phase 2 (UI) is not started.
+
+## What the user gets (v1)
+
+- Create more queues next to the normal one, and rename or delete them.
+- Switch between queues on the Queue screen. The app remembers the choice.
+- The selected queue is the **active queue**. Playing, "Add to queue", auto-enqueue after download and "add new episodes to queue" all use it.
+- Nothing looks different until a second queue exists (apart from a "New queue" menu item).
+
+## Rules
+
+There are two concepts, and the code keeps them apart:
+
+- **Queued** means in *some* queue. Used by the in-queue icon, the "In queue" filter, auto-download of queued episodes and "don't auto-delete queued episodes".
+- **The queue** means the ordered list of the *active* queue. Used by the Queue screen, playback order, Android Auto, Wear, the home section and the drawer badge.
+
+| Action | Result | Where it's implemented |
+|---|---|---|
+| Add to queue (menu, swipe, multi-select) | Added to the active queue. Already queued anywhere means no-op. | `DBWriter.addQueueItem`/`addQueueItemAt` |
+| Auto-enqueue (downloaded, new episode, playing an unqueued episode) | Active queue. | same (callers unchanged) |
+| Remove from queue, "delete removes from queue", finished playback, played on another device | Removed from the queue that holds it. | `DBWriter.removeQueueItemSynchronous` |
+| Delete episode or podcast | Removed from every queue. | `DBWriter.deleteFeedItemsSynchronous` |
+| Move, sort, clear, lock, keep sorted | Active queue. Lock and keep-sorted are global preferences. | `DBWriter` |
+| Next episode | Next in the active queue. If the finished episode isn't in it, playback stops. | `PodDBAdapter.getNextInQueue` |
+| Switch queue | Takes effect immediately. Current playback continues. | `DBWriter.switchQueue` |
+| Delete a queue | After confirmation, its episodes are unqueued. If it was active, the default queue becomes active. | `DBWriter.deleteQueue` |
+| Database import with an unknown active queue | Falls back to the default queue. | `DBReader.getActiveQueueId` |
+| Round trip with the official app | Works. The official app shows all queues merged into one list. See ADR-0002. | schema |
+
+## Data model
+
+- `Queue(id, feeditem, feed, queue)`: `queue` references `Queues.id`, and `0` is the default queue. Order is by `id` within a queue.
+- `Queues(id, title)`: user-created queues only.
+- Preference `prefActiveQueue` (long, default `0`).
+- Model class `de.danoeh.antennapod.model.queue.Queue(id, title)`, where `title` is null for the default queue.
+
+## Phases
+
+| Phase | Branch | Content | Status |
+|---|---|---|---|
+| 0 | `mq/phase-0-setup` | Docs, branches, research | done |
+| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | in review |
+| 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | not started |
