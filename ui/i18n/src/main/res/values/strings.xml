@@ -393,6 +393,12 @@
     <string name="queue_lock_warning">If you lock the queue, you can no longer reorder episodes.</string>
     <string name="checkbox_do_not_show_again">Do not show again</string>
     <string name="clear_queue_label">Clear queue</string>
+    <string name="new_queue_label">New queue</string>
+    <string name="rename_queue_label">Rename queue</string>
+    <string name="delete_queue_label">Delete queue</string>
+    <string name="delete_queue_confirmation">Please confirm that you want to delete the queue \"%1$s\". Its episodes will be removed from the queue.</string>
+    <string name="queue_name_label">Queue name</string>
+    <string name="queue_name_empty">Name cannot be empty</string>
     <string name="undo">Undo</string>
     <string name="move_to_top_label">Move to top</string>
     <plurals name="move_to_top_message">

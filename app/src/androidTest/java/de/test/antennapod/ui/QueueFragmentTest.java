@@ -14,7 +14,11 @@ import org.junit.runner.RunWith;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static de.test.antennapod.NthMatcher.first;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -58,5 +62,27 @@ public class QueueFragmentTest {
         onView(first(EspressoTestUtils.actionBarOverflow())).perform(click());
         onView(withText(R.string.sort)).perform(click());
         onView(withText(R.string.keep_sorted)).perform(click());
+    }
+
+    @Test
+    public void testCreateRenameAndDeleteQueue() {
+        onView(first(EspressoTestUtils.actionBarOverflow())).perform(click());
+        onView(withText(R.string.new_queue_label)).perform(click());
+        onView(withText(R.string.confirm_label)).perform(click());
+        onView(withText(R.string.queue_name_empty)).check(matches(isDisplayed()));
+        onView(withId(R.id.textInput)).perform(replaceText("Second"));
+        onView(withText(R.string.confirm_label)).perform(click());
+        EspressoTestUtils.waitForViewGlobally(withText("Second"), 3000);
+
+        onView(first(EspressoTestUtils.actionBarOverflow())).perform(click());
+        onView(withText(R.string.rename_queue_label)).perform(click());
+        onView(withId(R.id.textInput)).perform(replaceText("Renamed"));
+        onView(withText(R.string.confirm_label)).perform(click());
+        EspressoTestUtils.waitForViewGlobally(withText("Renamed"), 3000);
+
+        onView(first(EspressoTestUtils.actionBarOverflow())).perform(click());
+        onView(withText(R.string.delete_queue_label)).perform(click());
+        onView(withText(R.string.confirm_label)).perform(click());
+        EspressoTestUtils.waitForViewToDisappear(withText("Renamed"), 3000);
     }
 }
