@@ -56,5 +56,8 @@ The user's rule is to have the latest upstream merged before any new phase, and 
 
 ## Results
 
-- **CI on the PR:** pending.
-- **First sync run:** pending the merge and the two settings.
+- **CI on the PR:** green.
+- **Merged** by the user through PR #5 (merge commit `d9be176`). The merge also published release `v3.12.1-mq.2` through `fork-release.yml`.
+- **Settings:** the user switched the default branch to `multiple-queues` and allowed GitHub Actions to create pull requests.
+- **First sync run:** to be started by the user from **Actions → Fork upstream sync → Run workflow**. The agent's proxy blocks the dispatch API (403). Expected result: green, with no PR, since the fork is level with upstream.
+- **Follow-up (PR "Label sync pull requests"):** the workflow adds the `upstream-sync` label to the PRs it opens, part of the user's labels rule.

@@ -36,9 +36,22 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
 3. Implement, with tests, following upstream `AGENTS.md`: minimal diff, no comments in code, English strings only.
 4. Security review, written to `security/phase-N.md`.
 5. Performance, reuse and simplification review, written to `perf/phase-N.md`. Improvements are applied in the same phase.
-6. Push and open a PR into `multiple-queues`. CI (the upstream `checks.yml`) runs checkstyle, lint, the unit tests and emulator tests, and uploads `app-play-debug.apk`.
+6. Push and open a PR into `multiple-queues`, **with labels** (the user's rule, see below). CI (the upstream `checks.yml`) runs checkstyle, lint, the unit tests and emulator tests, and uploads `app-play-debug.apk`.
 7. The user tests the APK against the checklist in the phase log.
 8. **Only the user approves and merges PRs.** Nothing is merged into `multiple-queues` without their approval. The next phase branch is stacked on the previous phase branch until that one is merged.
+
+## PR labels
+
+Every PR gets labels. Upstream's labels don't come with a fork, so the fork uses GitHub's defaults plus three of its own:
+
+| Label | Used for |
+|---|---|
+| `enhancement` | New or changed app behaviour |
+| `bug` | Fixes |
+| `documentation` | Changes under `docs/` (most phase PRs carry this alongside another label) |
+| `multiple-queues` | Anything touching the multiple-queues feature |
+| `fork-infra` | Fork-only workflows, scripts and release tooling |
+| `upstream-sync` | PRs that bring upstream changes in. `fork-sync.yml` adds it to its own PRs. |
 
 ## Index
 
