@@ -575,7 +575,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 return MediaItemAdapter.from(context, MEDIA_ID_ROOT,
                         context.getString(R.string.app_name), R.drawable.ic_notification, null);
             case MEDIA_ID_QUEUE: {
-                int numEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.QUEUED));
+                int numEpisodes = DBReader.getQueueIDList().size();
                 return MediaItemAdapter.from(context, MEDIA_ID_QUEUE,
                         context.getString(R.string.queue_label), R.drawable.ic_playlist_play_black,
                         context.getResources().getQuantityString(R.plurals.num_episodes, numEpisodes, numEpisodes));

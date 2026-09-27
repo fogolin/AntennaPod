@@ -46,12 +46,13 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
 - Phases:
   - [phase 0, setup](phases/phase-0-setup.md)
   - [phase 1, storage](phases/phase-1-storage.md)
+  - [phase 2, UI](phases/phase-2-ui.md)
 - Findings:
   - [upstream research](findings/upstream-research.md)
   - [codebase map](findings/codebase-map.md)
   - [environment](findings/environment.md)
 - Reviews:
-  - security: [phase 1](security/phase-1.md)
-  - performance: [phase 1](perf/phase-1.md)
+  - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md)
+  - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md)
 - Maintenance: [maintenance/fork-sync.md](maintenance/fork-sync.md)
 - Backlog: [future/backlog.md](future/backlog.md)

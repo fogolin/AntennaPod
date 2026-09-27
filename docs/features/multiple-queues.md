@@ -1,7 +1,7 @@
 # Feature: multiple queues
 
 - **Upstream issue:** #2648
-- **Status:** in progress. Phase 1 (storage) is implemented. Phase 2 (UI) is not started.
+- **Status:** v1 is complete. Phase 1 (storage) is merged, and phase 2 (UI) is in PR #3.
 
 ## What the user gets (v1)
 
@@ -31,6 +31,13 @@ There are two concepts, and the code keeps them apart:
 | Database import with an unknown active queue | Falls back to the default queue. | `DBReader.getActiveQueueId` |
 | Round trip with the official app | Works. The official app shows all queues merged into one list. See ADR-0002. | schema |
 
+## UI (phase 2, ADR-0007)
+
+- **Queue screen:** a chip row under the header, shown only with 2+ queues. The checked chip is the active queue, and tapping another one switches.
+- **⋮ menu:** "New queue" is always shown. "Rename queue" and "Delete queue" appear only when a custom queue is active.
+- **Names:** trimmed, non-empty, at most 30 characters. The default queue is shown as "Queue" (the translated `queue_label`).
+- **Android Auto:** the "Queue" node lists the active queue, and its count matches.
+
 ## Data model
 
 - `Queue(id, feeditem, feed, queue)`: `queue` references `Queues.id`, and `0` is the default queue. Order is by `id` within a queue.
@@ -43,5 +50,5 @@ There are two concepts, and the code keeps them apart:
 | Phase | Branch | Content | Status |
 |---|---|---|---|
 | 0 | `mq/phase-0-setup` | Docs, branches, research | merged (PR #1) |
-| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | PR #2, CI green, awaiting manual test and approval |
-| 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | not started |
+| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | merged (PR #2) |
+| 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | PR #3, CI green, awaiting manual test and approval |

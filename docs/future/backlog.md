@@ -16,6 +16,9 @@ These items are deferred on purpose. Each one needs its own discussion before it
 | Rename the default queue | ADR-0003. Needs a row or a preference. |
 | Episode in several queues | ADR-0004. The schema already allows it. |
 | Search from the Queue screen scoped to the active queue | ADR-0006, D5. |
+| Show the active queue's name in the toolbar title | ADR-0007 keeps "Queue", because the checked chip shows it. Revisit if the chips scroll out of view in practice. |
+| Reorder queues (chip order) | Chips follow creation order (`Queues.id`). |
+| Friendlier handling of a `NULL` or over-long name from an imported database | Security review phase 2, G2. Cosmetic only. |
 
 ## Known limitations of v1
 

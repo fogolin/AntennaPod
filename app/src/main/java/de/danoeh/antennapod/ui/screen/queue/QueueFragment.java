@@ -26,6 +26,8 @@ import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import de.danoeh.antennapod.event.MessageEvent;
@@ -63,6 +65,7 @@ import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.common.EmptyViewHandler;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListRecyclerView;
@@ -92,11 +95,15 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
     private boolean displayUpArrow;
 
     private List<FeedItem> queue;
+    private Queue activeQueue;
+    private View queueChipsContainer;
+    private ChipGroup queueChipGroup;
 
     private static final String PREFS = "QueueFragment";
     private static final String PREF_SHOW_LOCK_WARNING = "show_lock_warning";
 
     private Disposable disposable;
+    private Disposable queuesDisposable;
     private SwipeActions swipeActions;
     private SharedPreferences prefs;
 
@@ -113,6 +120,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
     public void onStart() {
         super.onStart();
         loadItems();
+        loadQueues();
         EventBus.getDefault().register(this);
     }
 
@@ -130,6 +138,9 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         EventBus.getDefault().unregister(this);
         if (disposable != null) {
             disposable.dispose();
+        }
+        if (queuesDisposable != null) {
+            queuesDisposable.dispose();
         }
     }
 
@@ -172,6 +183,10 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                     recyclerAdapter.notifyItemMoved(position, event.position);
                 }
                 break;
+            case QUEUES_CHANGED:
+                loadQueues();
+                loadItems();
+                return;
             default:
                 return;
         }
@@ -276,6 +291,9 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         boolean keepSorted = UserPreferences.isQueueKeepSorted();
         toolbar.getMenu().findItem(R.id.queue_lock).setChecked(UserPreferences.isQueueLocked());
         toolbar.getMenu().findItem(R.id.queue_lock).setVisible(!keepSorted);
+        boolean isCustomQueue = activeQueue != null && activeQueue.id != Queue.DEFAULT_QUEUE_ID;
+        toolbar.getMenu().findItem(R.id.rename_queue_item).setVisible(isCustomQueue);
+        toolbar.getMenu().findItem(R.id.delete_queue_item).setVisible(isCustomQueue);
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
@@ -314,6 +332,23 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 }
             };
             conDialog.createNewDialog().show();
+            return true;
+        } else if (itemId == R.id.new_queue_item) {
+            new QueueNameDialog(getActivity(), null).show();
+            return true;
+        } else if (itemId == R.id.rename_queue_item) {
+            new QueueNameDialog(getActivity(), activeQueue).show();
+            return true;
+        } else if (itemId == R.id.delete_queue_item) {
+            final long queueId = activeQueue.id;
+            new ConfirmationDialog(getActivity(), R.string.delete_queue_label,
+                    getString(R.string.delete_queue_confirmation, activeQueue.title)) {
+                @Override
+                public void onConfirmButtonPressed(DialogInterface dialog) {
+                    dialog.dismiss();
+                    DBWriter.deleteQueue(queueId);
+                }
+            }.createNewDialog().show();
             return true;
         } else if (itemId == R.id.action_search) {
             ((MainActivity) getActivity()).loadChildFragment(
@@ -429,6 +464,8 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         boolean largePadding = displayUpArrow || !UserPreferences.isBottomNavigationEnabled();
         int paddingHorizontal = (int) (getResources().getDisplayMetrics().density * (largePadding ? 60 : 16));
         infoBar.setPadding(paddingHorizontal, 0, paddingHorizontal, 0);
+        queueChipsContainer = root.findViewById(R.id.queueChipsContainer);
+        queueChipGroup = root.findViewById(R.id.queueChipGroup);
 
         recyclerView = root.findViewById(R.id.recyclerView);
         RecyclerView.ItemAnimator animator = recyclerView.getItemAnimator();
@@ -556,6 +593,44 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                     }
                     refreshInfoBar();
                 }, error -> Log.e(TAG, Log.getStackTraceString(error)));
+    }
+
+    private void loadQueues() {
+        if (queuesDisposable != null) {
+            queuesDisposable.dispose();
+        }
+        queuesDisposable = Observable.fromCallable(() -> new Pair<>(DBReader.getQueues(), DBReader.getActiveQueueId()))
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(queuesAndActiveId -> {
+                    final Queue previousQueue = activeQueue;
+                    queueChipGroup.removeAllViews();
+                    for (Queue entry : queuesAndActiveId.first) {
+                        boolean isActive = entry.id == queuesAndActiveId.second;
+                        if (isActive) {
+                            activeQueue = entry;
+                        }
+                        Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_tag_chip, queueChipGroup, false);
+                        chip.setId(View.generateViewId());
+                        chip.setText(entry.title != null ? entry.title : getString(R.string.queue_label));
+                        chip.setChecked(isActive);
+                        chip.setOnClickListener(v -> switchQueue(entry));
+                        queueChipGroup.addView(chip);
+                    }
+                    queueChipsContainer.setVisibility(queuesAndActiveId.first.size() > 1 ? View.VISIBLE : View.GONE);
+                    if (previousQueue != null && previousQueue.id != activeQueue.id) {
+                        recyclerView.scrollToPosition(0);
+                    }
+                    refreshToolbarState();
+                }, error -> Log.e(TAG, Log.getStackTraceString(error)));
+    }
+
+    private void switchQueue(Queue newQueue) {
+        if (activeQueue == null || newQueue.id == activeQueue.id) {
+            return;
+        }
+        recyclerAdapter.endSelectMode();
+        DBWriter.switchQueue(newQueue.id);
     }
 
     @Override
