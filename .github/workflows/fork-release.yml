@@ -1,0 +1,74 @@
+name: Fork release
+
+on:
+  push:
+    branches: [ multiple-queues ]
+  workflow_dispatch:
+
+concurrency:
+  group: fork-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "Signed release APK"
+    if: github.ref == 'refs/heads/multiple-queues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c # v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Cache Gradle
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FORK_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error title=Signing key missing::Add the FORK_KEYSTORE_BASE64, FORK_KEYSTORE_PASSWORD, FORK_KEY_ALIAS and FORK_KEY_PASSWORD secrets, see docs/maintenance/release-builds.md"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/fork.keystore"
+      - name: Set fork version name
+        id: version
+        run: |
+          base=$(sed -n 's/^ *versionName "\(.*\)"$/\1/p' app/build.gradle)
+          name="$base-mq.$GITHUB_RUN_NUMBER"
+          sed -i "s/^\( *versionName \)\".*\"$/\1\"$name\"/" app/build.gradle
+          grep -q "versionName \"$name\"" app/build.gradle
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Build
+        env:
+          ORG_GRADLE_PROJECT_releaseStoreFile: ${{ runner.temp }}/fork.keystore
+          ORG_GRADLE_PROJECT_releaseStorePassword: ${{ secrets.FORK_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_releaseKeyAlias: ${{ secrets.FORK_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_releaseKeyPassword: ${{ secrets.FORK_KEY_PASSWORD }}
+        run: ./gradlew :app:assemblePlayRelease
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          apk="AntennaPod-$NAME.apk"
+          cp app/build/outputs/apk/play/release/app-play-release.apk "$apk"
+          sha256sum "$apk" > "$apk.sha256"
+          gh release create "v$NAME" "$apk" "$apk.sha256" \
+              --target "$GITHUB_SHA" \
+              --title "AntennaPod $NAME" \
+              --notes "Multiple-queues build of AntennaPod $NAME from commit $GITHUB_SHA on multiple-queues."
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/fork.keystore"
