@@ -8,7 +8,6 @@ import androidx.core.util.Consumer;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 import de.danoeh.antennapod.R;
@@ -22,14 +21,14 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class QueuePickerDialog {
     private static final String TAG = "QueuePickerDialog";
 
-    private final WeakReference<Activity> activityRef;
+    private final Activity activity;
     @StringRes private final int title;
     private final long[] itemIds;
     private final Consumer<Queue> onQueueChosen;
 
     public QueuePickerDialog(Activity activity, @StringRes int title, long[] itemIds,
                              Consumer<Queue> onQueueChosen) {
-        this.activityRef = new WeakReference<>(activity);
+        this.activity = activity;
         this.title = title;
         this.itemIds = itemIds;
         this.onQueueChosen = onQueueChosen;
@@ -55,8 +54,7 @@ public class QueuePickerDialog {
     }
 
     private void showQueues(List<Queue> queues) {
-        Activity activity = activityRef.get();
-        if (activity == null || activity.isFinishing() || queues.isEmpty()) {
+        if (activity.isFinishing() || activity.isDestroyed() || queues.isEmpty()) {
             return;
         }
         String[] names = new String[queues.size()];

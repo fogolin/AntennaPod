@@ -313,7 +313,6 @@ public class DbMultipleQueuesTest {
         setQueue(queueId, items.get(2));
 
         DBWriter.moveToQueue(context, queueId, items.get(0), items.get(2)).get(TIMEOUT, TimeUnit.SECONDS);
-        DBWriter.addQueueItem(context).get(TIMEOUT, TimeUnit.SECONDS);
 
         assertQueue(Queue.DEFAULT_QUEUE_ID, items.get(1));
         assertQueue(queueId, items.get(2), items.get(0));
@@ -325,7 +324,6 @@ public class DbMultipleQueuesTest {
         setQueue(queueId, items.get(0));
 
         DBWriter.moveToQueue(context, Queue.DEFAULT_QUEUE_ID, items.get(0)).get(TIMEOUT, TimeUnit.SECONDS);
-        DBWriter.addQueueItem(context).get(TIMEOUT, TimeUnit.SECONDS);
 
         assertQueue(queueId);
         assertQueue(Queue.DEFAULT_QUEUE_ID, items.get(0));

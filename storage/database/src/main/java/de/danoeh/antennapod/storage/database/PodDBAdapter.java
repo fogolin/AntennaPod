@@ -452,6 +452,7 @@ public class PodDBAdapter {
             for (String tableName : ALL_TABLES) {
                 adapter.db.delete(tableName, "1", null);
             }
+            hasCustomQueues = false;
             return true;
         } finally {
             adapter.close();

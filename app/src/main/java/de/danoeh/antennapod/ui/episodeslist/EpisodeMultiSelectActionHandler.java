@@ -101,9 +101,15 @@ public class EpisodeMultiSelectActionHandler {
     }
 
     private void moveCheckedToChosenQueue(List<FeedItem> items) {
-        new QueuePickerDialog(activity, R.string.move_to_queue_label, getSelectedIds(items), queue -> {
-            DBWriter.moveToQueue(activity, queue.id, items.toArray(new FeedItem[0]));
-            showMessage(R.plurals.moved_to_queue_message, items.size());
+        List<FeedItem> toMove = new ArrayList<>();
+        for (FeedItem episode : items) {
+            if (episode.isTagged(FeedItem.TAG_QUEUE)) {
+                toMove.add(episode);
+            }
+        }
+        new QueuePickerDialog(activity, R.string.move_to_queue_label, getSelectedIds(toMove), queue -> {
+            DBWriter.moveToQueue(activity, queue.id, toMove.toArray(new FeedItem[0]));
+            showMessage(R.plurals.moved_to_queue_message, toMove.size());
         }).show();
     }
 
