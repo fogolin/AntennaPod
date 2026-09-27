@@ -1,0 +1,157 @@
+name: Fork upstream sync
+
+on:
+  schedule:
+    - cron: '23 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: fork-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: "Merge and test upstream"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      upstream: ${{ steps.fetch.outputs.upstream }}
+      status: ${{ steps.merge.outputs.status }}
+      conflicts: ${{ steps.merge.outputs.conflicts }}
+      tests: ${{ steps.test.outcome }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: multiple-queues
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch upstream
+        id: fetch
+        run: |
+          git fetch --no-tags https://github.com/AntennaPod/AntennaPod.git develop
+          echo "upstream=$(git rev-parse FETCH_HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Merge
+        id: merge
+        env:
+          UPSTREAM: ${{ steps.fetch.outputs.upstream }}
+        run: |
+          if git merge-base --is-ancestor "$UPSTREAM" HEAD; then
+            echo "status=up-to-date" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git merge --no-edit "$UPSTREAM"; then
+            echo "status=clean" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "status=conflict"
+              echo "conflicts<<CONFLICTS_END"
+              git diff --name-only --diff-filter=U
+              echo "CONFLICTS_END"
+            } >> "$GITHUB_OUTPUT"
+            git merge --abort
+          fi
+      - uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c # v5
+        if: steps.merge.outputs.status == 'clean'
+      - name: Set up JDK 21
+        if: steps.merge.outputs.status == 'clean'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Cache Gradle
+        if: steps.merge.outputs.status == 'clean'
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Build, unit tests and checkstyle
+        id: test
+        if: steps.merge.outputs.status == 'clean'
+        continue-on-error: true
+        run: ./gradlew assemblePlayDebug testPlayDebugUnitTest testDebugUnitTest checkstyle
+
+  publish:
+    name: "Update develop and the sync pull request"
+    needs: check
+    if: needs.check.outputs.status == 'clean' || needs.check.outputs.status == 'conflict'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: multiple-queues
+          fetch-depth: 0
+      - name: Push develop and sync/upstream
+        id: push
+        env:
+          UPSTREAM: ${{ needs.check.outputs.upstream }}
+        run: |
+          git fetch --no-tags https://github.com/AntennaPod/AntennaPod.git develop
+          git cat-file -e "$UPSTREAM^{commit}"
+          git push origin "$UPSTREAM:refs/heads/develop" \
+              || echo "::warning title=develop is not a mirror::The fork's develop has commits that aren't upstream. Left it unchanged."
+          if git rev-parse -q --verify origin/sync/upstream > /dev/null \
+              && [ -n "$(git rev-list origin/sync/upstream --not "$UPSTREAM" --)" ]; then
+            echo "::notice title=Manual work kept::sync/upstream has commits that aren't upstream, such as a conflict resolution. Left it unchanged."
+            echo "kept=true" >> "$GITHUB_OUTPUT"
+          else
+            git push --force origin "$UPSTREAM:refs/heads/sync/upstream"
+          fi
+      - name: Open or update the pull request
+        if: steps.push.outputs.kept != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM: ${{ needs.check.outputs.upstream }}
+          STATUS: ${{ needs.check.outputs.status }}
+          CONFLICTS: ${{ needs.check.outputs.conflicts }}
+          TESTS: ${{ needs.check.outputs.tests }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          short=$(git rev-parse --short "$UPSTREAM")
+          count=$(git rev-list --count --no-merges "HEAD..$UPSTREAM")
+          {
+            echo "Brings $count upstream commits from AntennaPod \`develop\` (\`$short\`) into \`multiple-queues\`."
+            echo
+            if [ "$STATUS" = "conflict" ]; then
+              echo "**Merge conflicts** in these files. Ask Claude to merge \`multiple-queues\` into \`sync/upstream\` and resolve them:"
+              echo
+              while read -r file; do
+                echo "- \`$file\`"
+              done <<< "$CONFLICTS"
+            elif [ "$TESTS" = "success" ]; then
+              echo "**Build, unit tests and checkstyle passed** on the merged code in [the sync run]($RUN_URL)."
+            else
+              echo "**Build, unit tests or checkstyle failed** on the merged code, see [the sync run]($RUN_URL). Don't merge yet."
+            fi
+            echo
+            echo "The full checks (lint and emulator tests) don't start by themselves on a pull request opened by a workflow. To run them, close and reopen this pull request."
+            echo
+            echo "<details><summary>Upstream commits</summary>"
+            echo
+            echo '```'
+            git log --no-merges -n 100 --format='%h %s' "HEAD..$UPSTREAM"
+            echo '```'
+            echo "</details>"
+          } > "$RUNNER_TEMP/body.md"
+          title="Sync with upstream AntennaPod ($short)"
+          pr=$(gh pr list --head sync/upstream --base multiple-queues --state open --json number --jq '.[].number')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --head sync/upstream --base multiple-queues --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          fi
+      - name: Report problems
+        if: needs.check.outputs.status == 'conflict' || needs.check.outputs.tests == 'failure'
+        run: |
+          echo "::error title=Upstream sync needs attention::Merge conflicts or failing checks, see the sync pull request."
+          exit 1

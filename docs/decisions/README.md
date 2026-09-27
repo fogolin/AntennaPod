@@ -10,5 +10,6 @@
 | [0006](ADR-0006-v1-product-decisions.md) | Other v1 product decisions (D3–D7) | accepted for v1 |
 | [0007](ADR-0007-queue-ui.md) | Queue UI: chips switch, the overflow menu manages | accepted, supersedes plan §7 |
 | [0008](ADR-0008-fork-release-builds.md) | Fork release builds: replace the official app, play flavor, signed GitHub Releases | accepted |
+| [0009](ADR-0009-upstream-sync.md) | Weekly upstream sync with GitHub Actions and a single sync PR | accepted |
 
 **Format.** Each record has a status, a context, a decision and its consequences. Records are never rewritten. To change a decision, add a new ADR that supersedes the old one, and update this table.

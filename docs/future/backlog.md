@@ -29,5 +29,5 @@ These items are deferred on purpose. Each one needs its own discussion before it
 
 ## Fork operations
 
-- **Next: automatic upstream sync.** A scheduled task that notices new upstream releases, merges them into a `sync/<tag>` branch and opens a PR into `multiple-queues`. CI tests it, the user approves, and the merge triggers a new release build. Scheduled GitHub workflows only run from the default branch, so the fork's default branch would move from `develop` to `multiple-queues`.
+- ~~Automatic upstream sync~~: done in phase 4 (weekly, GitHub Actions, one sync PR; [fork-sync.md](../maintenance/fork-sync.md)).
 - ~~A release-signed APK with its own key~~: done in phase 3 ([release-builds.md](../maintenance/release-builds.md)).

@@ -59,5 +59,6 @@ The workflow can't run before it's merged, because it only triggers on `multiple
 
 ## Results
 
-- **CI on the PR:** pending.
-- **First release run:** pending the user's secrets and merge.
+- **CI on the PR:** green.
+- **Merged** by the user through PR #4 (merge commit `8cbe239`). The user created the key with `scripts/createForkSigningKey.sh` and uploaded the secrets before merging.
+- **First release run [36343221104](https://github.com/fogolin/AntennaPod/actions/runs/36343221104):** green in about 5 minutes, and it published [v3.12.1-mq.1](https://github.com/fogolin/AntennaPod/releases/tag/v3.12.1-mq.1). The APK is 9.5 MB. After download, the SHA-256 matched, and `jarsigner` verified the signer `CN=AntennaPod fork`.
