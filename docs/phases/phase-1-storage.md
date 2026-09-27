@@ -1,6 +1,6 @@
 # Phase 1: storage layer
 
-- **Branch:** `mq/phase-1-storage`, stacked on `mq/phase-0-setup` (PR #1) until that is merged. Its PR goes into `multiple-queues`.
+- **Branch:** `mq/phase-1-storage`, as PR #2 into `multiple-queues`. It was opened on top of phase 0 and retargeted after PR #1 was merged.
 - **Date:** 2026-09-26
 - **User-visible changes:** none. The app behaves exactly like upstream while only the default queue exists. The UI to create and switch queues is phase 2.
 
@@ -62,5 +62,17 @@ There's nothing multi-queue to click yet. Multiple queues are only reachable thr
 
 ## Results
 
-- **CI:** see the PR checks.
+**CI run [36288029928](https://github.com/fogolin/AntennaPod/actions/runs/36288029928)** on commit `a3a7980`: **all green.**
+
+| Check | Result |
+|---|---|
+| Gradle wrapper validation | pass |
+| Static analysis (XML format, checkstyle, lint) | pass |
+| Unit tests PlayDebug (all modules, including the 18 new tests) | pass |
+| Unit tests PlayRelease | pass |
+| FreeRelease build | pass |
+| Emulator tests, API 23/30/36, debug and release | pass (5/5) |
+
+The artifact `app-play-debug.apk` (about 21 MB) is attached to that run.
+
 - **Manual test:** pending the user.

@@ -42,6 +42,6 @@ There are two concepts, and the code keeps them apart:
 
 | Phase | Branch | Content | Status |
 |---|---|---|---|
-| 0 | `mq/phase-0-setup` | Docs, branches, research | PR #1, awaiting approval |
-| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | implemented, awaiting approval |
+| 0 | `mq/phase-0-setup` | Docs, branches, research | merged (PR #1) |
+| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | PR #2, CI green, awaiting manual test and approval |
 | 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | not started |
