@@ -6,9 +6,8 @@
 
 ## Upstream sync
 
-- Upstream `develop` gained one commit before this phase: `d3c01a5` "Enable bottom navigation for all existing users (#8808)".
-- The user was asked to run the sync workflow, its first real run.
-- The result is recorded under [Results](#results).
+- Upstream `develop` gained one commit before this phase: `d3c01a5` "Enable bottom navigation for all existing users (#8808)". It adds a step to `PreferenceUpgrader` for `oldVersion < 3130000`, so it takes effect at the 3.13 version bump, for the fork as for the official app.
+- The sync workflow hadn't been run yet when phase 6 was ready, so the commit was merged into this branch (workflow step 0). The merge was clean, touching one file.
 
 ## Why
 
