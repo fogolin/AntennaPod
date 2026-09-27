@@ -15,6 +15,7 @@
 | Class | Module | What it builds |
 |---|---|---|
 | `DbMultipleQueuesTest` | `net/download/service` (test) | One feed with 6 items that have media (`saveFeedlist(1, 6, true)`). Queues are created with `adapter.insertQueue`, filled with `adapter.setQueue(queueId, ...)`, and checked by reading `getQueueIDCursor(queueId)` in order. |
+| `QueueFragmentTest.testCreateRenameAndDeleteQueue` | `app` (androidTest, emulator) | Starts from a cleared database and preferences on the Queue screen, then drives the ⋮ menu: empty name, create "Second", rename to "Renamed", delete. It waits for the chip text to appear and disappear. |
 | `DBUpgraderMultipleQueuesTest` | `storage/database` (test) | An in-memory SQLite database with the **upstream** `Queue` schema (`id, feeditem, feed`) and two rows, then runs `DBUpgrader.upgradeMultipleQueues`. It also simulates the official app writing rows without the `queue` column. |
 
 ## Manual scenarios
