@@ -1,7 +1,7 @@
 # Feature: multiple queues
 
 - **Upstream issue:** #2648
-- **Status:** v1 is complete across phases 1 (storage) and 2 (UI), and both are awaiting the user's approval.
+- **Status:** v1 is complete. Phase 1 (storage) is merged, and phase 2 (UI) is in PR #3.
 
 ## What the user gets (v1)
 
@@ -50,5 +50,5 @@ There are two concepts, and the code keeps them apart:
 | Phase | Branch | Content | Status |
 |---|---|---|---|
 | 0 | `mq/phase-0-setup` | Docs, branches, research | merged (PR #1) |
-| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | PR #2, CI green, awaiting approval |
-| 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | implemented, awaiting approval |
+| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | merged (PR #2) |
+| 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | PR #3, awaiting CI and approval |

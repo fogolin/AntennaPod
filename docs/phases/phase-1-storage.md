@@ -75,4 +75,4 @@ There's nothing multi-queue to click yet. Multiple queues are only reachable thr
 
 The artifact `app-play-debug.apk` (about 21 MB) is attached to that run.
 
-- **Manual test:** pending the user.
+- **Merged** by the user into `multiple-queues` through PR #2 (merge commit `872ff66`) on 2026-09-27.

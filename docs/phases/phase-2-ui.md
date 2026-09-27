@@ -1,6 +1,6 @@
 # Phase 2: queue UI
 
-- **Branch:** `mq/phase-2-ui`, stacked on `mq/phase-1-storage` (PR #2 is still open). The PR goes into `multiple-queues` once #2 is merged.
+- **Branch:** `mq/phase-2-ui`, as PR #3 into `multiple-queues`. It was opened on top of phase 1 and retargeted after PR #2 was merged.
 - **Date:** 2026-09-27
 - **User-visible changes:** yes. This is the first phase you can see and use.
 
@@ -79,5 +79,24 @@ Install the APK from this PR's CI run (Actions → the run → Artifacts → `ap
 
 ## Results
 
-- **CI:** see the PR checks.
+**CI run 1** ([36327820878](https://github.com/fogolin/AntennaPod/actions/runs/36327820878), commit `63151d3`):
+
+| Check | Result |
+|---|---|
+| Static analysis | pass |
+| Unit tests PlayDebug, PlayRelease, FreeRelease | pass |
+| Emulator tests API 30 debug, API 36 debug, API 23 release, API 36 release | pass |
+| Emulator tests **API 23 debug** | **fail**, after the script's 3 retries |
+
+- **Can't read the log:** the job log and the `test-report` artifact sit in Azure blob storage, which the workspace can't reach (see [environment](../findings/environment.md)).
+- **Reasoning:** the new test passed on API 23 **release** and on API 30 and 36 **debug**. Only `app` has instrumented tests, so the debug and release runs execute the same suite. What's specific to API 23 debug:
+  - it's the slowest configuration (unoptimised build on a `default` image with swiftshader);
+  - the `default` image has a real soft keyboard (the API 30 and 36 `aosp_atd` images don't), and `QueueNameDialog` opens it.
+- **Fix:** harden `testCreateRenameAndDeleteQueue` the way `AddFeedFragmentTest` handles the same kind of dialog:
+  - call `Espresso.closeSoftKeyboard()` before each Confirm;
+  - click Confirm with `scrollTo(), click()`;
+  - wait up to 10 s instead of 3 s. The helpers poll every 50 ms, so this costs nothing when things are fast.
+
+**CI run 2:** see the PR checks.
+
 - **Manual test:** pending the user.
