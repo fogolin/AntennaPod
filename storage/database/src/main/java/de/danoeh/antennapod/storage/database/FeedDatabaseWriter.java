@@ -10,6 +10,7 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -219,7 +220,8 @@ public abstract class FeedDatabaseWriter {
         }
 
         // We need to add to queue after items are saved to database
-        DBWriter.addQueueItem(context, itemsToAddToQueue.toArray(new FeedItem[0]));
+        long queueId = savedFeed != null ? savedFeed.getPreferences().getQueueId() : Queue.ACTIVE_QUEUE_ID;
+        DBWriter.addQueueItem(context, queueId, itemsToAddToQueue.toArray(new FeedItem[0]));
 
         adapter.close();
 

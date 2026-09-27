@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 public class Queue {
 
     public static final long DEFAULT_QUEUE_ID = 0;
+    public static final long ACTIVE_QUEUE_ID = -1;
 
     public final long id;
     @Nullable public final String title;

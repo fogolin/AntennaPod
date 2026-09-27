@@ -379,6 +379,10 @@ public class DBWriter {
      * @param items    FeedItem objects that should be added to the queue.
      */
     public static Future<?> addQueueItem(final Context context, final FeedItem... items) {
+        return addQueueItem(context, Queue.ACTIVE_QUEUE_ID, items);
+    }
+
+    public static Future<?> addQueueItem(final Context context, final long targetQueueId, final FeedItem... items) {
         return runOnDbThread(() -> {
             if (items.length < 1) {
                 return;
@@ -386,7 +390,9 @@ public class DBWriter {
 
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final long queueId = DBReader.getActiveQueueId();
+            final long activeQueueId = DBReader.getActiveQueueId();
+            final long queueId = targetQueueId == Queue.DEFAULT_QUEUE_ID || adapter.queueExists(targetQueueId)
+                    ? targetQueueId : activeQueueId;
             final List<FeedItem> queue = DBReader.getQueue(queueId);
             long[] itemIds = new long[items.length];
             for (int i = 0; i < items.length; i++) {
@@ -420,6 +426,9 @@ public class DBWriter {
             if (!updatedItems.isEmpty()) {
                 applySortOrder(queue, events);
                 adapter.setQueue(queueId, queue);
+                if (queueId != activeQueueId) {
+                    events.clear();
+                }
                 for (QueueEvent event : events) {
                     EventBus.getDefault().post(event);
                 }

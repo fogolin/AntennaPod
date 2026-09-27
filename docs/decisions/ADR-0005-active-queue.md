@@ -1,6 +1,6 @@
 # ADR-0005: The active queue drives playback and every enqueue
 
-- **Status:** accepted, 2026-09-26. This is ByteHamster's #8070 direction (Nov 19, 2025) plus plan decision D2.
+- **Status:** accepted, 2026-09-26. This is ByteHamster's #8070 direction (Nov 19, 2025) plus plan decision D2. Amended by [ADR-0010](ADR-0010-podcast-queue.md): automatic adds follow the podcast's queue when one is set.
 
 ## Decision
 

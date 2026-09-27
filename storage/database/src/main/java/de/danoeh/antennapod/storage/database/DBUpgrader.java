@@ -371,6 +371,10 @@ class DBUpgrader {
                 new String[]{PodDBAdapter.TABLE_NAME_QUEUES}) == 0) {
             db.execSQL(PodDBAdapter.CREATE_TABLE_QUEUES);
         }
+        if (!hasColumn(db, PodDBAdapter.TABLE_NAME_FEEDS, PodDBAdapter.KEY_FEED_QUEUE)) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEEDS
+                    + " ADD COLUMN " + PodDBAdapter.KEY_FEED_QUEUE + " INTEGER DEFAULT " + Queue.ACTIVE_QUEUE_ID);
+        }
     }
 
     private static boolean hasColumn(final SQLiteDatabase db, final String table, final String column) {

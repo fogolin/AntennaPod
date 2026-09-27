@@ -399,6 +399,8 @@
     <string name="delete_queue_confirmation">Please confirm that you want to delete the queue \"%1$s\". Its episodes will be removed from the queue.</string>
     <string name="queue_name_label">Queue name</string>
     <string name="queue_name_empty">Name cannot be empty</string>
+    <string name="feed_queue_title">Queue for new episodes</string>
+    <string name="feed_queue_active">Active queue</string>
     <string name="undo">Undo</string>
     <string name="move_to_top_label">Move to top</string>
     <plurals name="move_to_top_message">

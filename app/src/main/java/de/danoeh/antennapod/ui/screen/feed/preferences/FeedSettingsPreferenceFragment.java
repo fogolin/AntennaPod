@@ -35,6 +35,7 @@ import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
@@ -45,12 +46,14 @@ import de.danoeh.antennapod.ui.screen.feed.RenameFeedDialog;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeOnSubscribe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -71,9 +74,11 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_TAGS = "tags";
     private static final String PREF_EDIT_FEED_URL = "editFeedUrl";
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
+    private static final String PREF_QUEUE = "feedQueue";
 
     private Feed feed;
     private Disposable disposable;
+    private Disposable queuesDisposable;
     private FeedPreferences feedPreferences;
 
     public static FeedSettingsPreferenceFragment newInstance(long feedId) {
@@ -141,6 +146,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     updateAutoDeleteSummary();
                     updateAutoDownloadEnabledSummary();
                     updateNewEpisodesActionSummary();
+                    loadQueues();
 
                     findPreference(PREF_RECONNECT_LOCAL_FOLDER).setVisible(feed.isLocalFeed());
                     if (feed.isLocalFeed()) {
@@ -159,6 +165,9 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         super.onDestroy();
         if (disposable != null) {
             disposable.dispose();
+        }
+        if (queuesDisposable != null) {
+            queuesDisposable.dispose();
         }
     }
 
@@ -305,6 +314,38 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             alert.setNegativeButton(android.R.string.cancel, null);
             alert.show();
             return true;
+        });
+    }
+
+    private void loadQueues() {
+        queuesDisposable = Observable.fromCallable(DBReader::getQueues)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::setupQueuePreference, error -> Log.d(TAG, Log.getStackTraceString(error)));
+    }
+
+    private void setupQueuePreference(List<Queue> queues) {
+        String[] entries = new String[queues.size() + 1];
+        String[] values = new String[queues.size() + 1];
+        entries[0] = getString(R.string.feed_queue_active);
+        values[0] = String.valueOf(Queue.ACTIVE_QUEUE_ID);
+        for (int i = 0; i < queues.size(); i++) {
+            Queue queue = queues.get(i);
+            entries[i + 1] = queue.title != null ? queue.title : getString(R.string.queue_label);
+            values[i + 1] = String.valueOf(queue.id);
+        }
+        ListPreference queuePreference = findPreference(PREF_QUEUE);
+        queuePreference.setEntries(entries);
+        queuePreference.setEntryValues(values);
+        queuePreference.setValue(String.valueOf(feedPreferences.getQueueId()));
+        queuePreference.setSummary(queuePreference.getEntry() != null ? queuePreference.getEntry() : entries[0]);
+        queuePreference.setVisible(queues.size() > 1);
+        queuePreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            feedPreferences.setQueueId(Long.parseLong((String) newValue));
+            DBWriter.setFeedPreferences(feedPreferences);
+            queuePreference.setValue((String) newValue);
+            queuePreference.setSummary(queuePreference.getEntry());
+            return false;
         });
     }
 

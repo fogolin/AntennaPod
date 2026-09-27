@@ -5,8 +5,11 @@ import android.database.Cursor;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import de.danoeh.antennapod.event.QueueEvent;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
@@ -15,9 +18,12 @@ import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueueStub;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.storage.database.FeedDatabaseWriter;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +32,9 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -41,6 +49,7 @@ public class DbMultipleQueuesTest {
 
     private Context context;
     private List<FeedItem> items;
+    private final List<QueueEvent> queueEvents = new CopyOnWriteArrayList<>();
 
     @Before
     public void setUp() {
@@ -54,10 +63,12 @@ public class DbMultipleQueuesTest {
         PodDBAdapter.init(context);
         PodDBAdapter.deleteDatabase();
         items = DbTestUtils.saveFeedlist(1, 6, true).get(0).getItems();
+        EventBus.getDefault().register(this);
     }
 
     @After
     public void tearDown() {
+        EventBus.getDefault().unregister(this);
         PodDBAdapter.tearDownTests();
         DBWriter.tearDownTests();
     }
@@ -232,6 +243,71 @@ public class DbMultipleQueuesTest {
         FeedItem item = DBReader.getFeedItem(items.get(0).getId());
         assertTrue(item.isTagged(FeedItem.TAG_QUEUE));
         assertNotEquals(queueId, DBReader.getActiveQueueId());
+    }
+
+    @Test
+    public void testAddQueueItemToOtherQueue() throws Exception {
+        long queueId = insertQueue("Second");
+
+        DBWriter.addQueueItem(context, queueId, items.get(0)).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueue(queueId, items.get(0));
+        assertQueue(Queue.DEFAULT_QUEUE_ID);
+        assertTrue(queueEvents.isEmpty());
+        assertTrue(DBReader.getFeedItem(items.get(0).getId()).isTagged(FeedItem.TAG_QUEUE));
+    }
+
+    @Test
+    public void testAddQueueItemToMissingQueueUsesActiveQueue() throws Exception {
+        DBWriter.addQueueItem(context, 12345, items.get(0)).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueue(Queue.DEFAULT_QUEUE_ID, items.get(0));
+        assertFalse(queueEvents.isEmpty());
+    }
+
+    @Test
+    public void testNewEpisodesGoToFeedQueue() throws Exception {
+        long queueId = insertQueue("Second");
+        Feed feed = items.get(0).getFeed();
+        FeedPreferences preferences = DBReader.getFeed(feed.getId(), false, 0, 0).getPreferences();
+        preferences.setNewEpisodesAction(FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE);
+        preferences.setAutoDownload(FeedPreferences.AutoDownloadSetting.DISABLED);
+        preferences.setQueueId(queueId);
+        DBWriter.setFeedPreferences(preferences).get(TIMEOUT, TimeUnit.SECONDS);
+
+        Feed update = new Feed(feed.getDownloadUrl(), null, feed.getTitle());
+        update.setId(feed.getId());
+        update.setItems(new ArrayList<>());
+        FeedItem newItem = new FeedItem(0, "new item", "new-id", "new-link",
+                new Date(System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000), FeedItem.UNPLAYED, update);
+        newItem.setMedia(new FeedMedia(newItem, "new-url", 1, "audio/mp3"));
+        update.getItems().add(newItem);
+        FeedDatabaseWriter.updateFeed(context, update, false);
+        DBWriter.addQueueItem(context).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueue(queueId, newItem);
+        assertQueue(Queue.DEFAULT_QUEUE_ID);
+        assertEquals(queueId, DBReader.getFeed(feed.getId(), false, 0, 0).getPreferences().getQueueId());
+    }
+
+    @Test
+    public void testDeleteQueueResetsFeedQueue() throws Exception {
+        long queueId = insertQueue("Second");
+        long feedId = items.get(0).getFeed().getId();
+        FeedPreferences preferences = DBReader.getFeed(feedId, false, 0, 0).getPreferences();
+        assertEquals(Queue.ACTIVE_QUEUE_ID, preferences.getQueueId());
+        preferences.setQueueId(queueId);
+        DBWriter.setFeedPreferences(preferences).get(TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(queueId, DBReader.getFeed(feedId, false, 0, 0).getPreferences().getQueueId());
+
+        DBWriter.deleteQueue(queueId).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertEquals(Queue.ACTIVE_QUEUE_ID, DBReader.getFeed(feedId, false, 0, 0).getPreferences().getQueueId());
+    }
+
+    @Subscribe
+    public void onQueueEvent(QueueEvent event) {
+        queueEvents.add(event);
     }
 
     private long insertQueue(String title) {

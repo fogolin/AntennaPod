@@ -23,6 +23,8 @@ public class DBUpgraderMultipleQueuesTest {
         db.execSQL("CREATE TABLE Queue(id INTEGER PRIMARY KEY,feeditem INTEGER,feed INTEGER)");
         db.execSQL("INSERT INTO Queue (id, feeditem, feed) VALUES (0, 10, 1)");
         db.execSQL("INSERT INTO Queue (id, feeditem, feed) VALUES (1, 11, 1)");
+        db.execSQL("CREATE TABLE Feeds(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)");
+        db.execSQL("INSERT INTO Feeds (title) VALUES ('Podcast')");
     }
 
     @After
@@ -52,6 +54,18 @@ public class DBUpgraderMultipleQueuesTest {
         db.execSQL("INSERT INTO Queues (title) VALUES ('Second')");
         DBUpgrader.upgradeMultipleQueues(db);
         assertEquals(1, DatabaseUtils.queryNumEntries(db, PodDBAdapter.TABLE_NAME_QUEUES));
+    }
+
+    @Test
+    public void testExistingFeedsFollowActiveQueue() {
+        DBUpgrader.upgradeMultipleQueues(db);
+        db.execSQL("INSERT INTO Feeds (title) VALUES ('Second podcast')");
+        try (Cursor cursor = db.rawQuery("SELECT feed_queue FROM Feeds", null)) {
+            assertEquals(2, cursor.getCount());
+            while (cursor.moveToNext()) {
+                assertEquals(Queue.ACTIVE_QUEUE_ID, cursor.getLong(0));
+            }
+        }
     }
 
     @Test
