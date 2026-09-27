@@ -148,7 +148,8 @@ jobs:
           if [ -n "$pr" ]; then
             gh pr edit "$pr" --title "$title" --body-file "$RUNNER_TEMP/body.md"
           else
-            gh pr create --head sync/upstream --base multiple-queues --title "$title" --body-file "$RUNNER_TEMP/body.md"
+            gh pr create --head sync/upstream --base multiple-queues --title "$title" --body-file "$RUNNER_TEMP/body.md" \
+                --label upstream-sync
           fi
       - name: Report problems
         if: needs.check.outputs.status == 'conflict' || needs.check.outputs.tests == 'failure'
