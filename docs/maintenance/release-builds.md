@@ -4,55 +4,60 @@ Every time `multiple-queues` changes (you merge a PR), GitHub builds a signed re
 
 ## One-time setup: the signing key
 
-Do this on your own computer. The key never needs to leave it except as GitHub secrets.
+Do this on your own computer, in your local clone of the fork. The key only leaves your machine as GitHub secrets.
 
-### 1. Create the key
+**You need:** `keytool`, which comes with any Java JDK and with Android Studio (`<Android Studio>/jbr/bin`). Run everything below in a bash shell: Linux, macOS, WSL, or Git Bash on Windows.
 
-This needs `keytool`, which comes with any Java JDK and with Android Studio (`<Android Studio>/jbr/bin/keytool`).
+### 1. Create the key and `.env`
 
-```sh
-keytool -genkeypair -v -keystore antennapod-fork.jks -alias antennapod-fork \
-    -keyalg RSA -keysize 4096 -validity 10000
-```
-
-- Pick a strong password.
-- The name and organisation questions can be anything.
-- Modern `keytool` uses the store password for the key as well.
-
-If you have OpenSSL but no Java:
+From the root of your clone:
 
 ```sh
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 10000 -nodes -subj "/CN=AntennaPod fork"
-openssl pkcs12 -export -inkey key.pem -in cert.pem -name antennapod-fork -out antennapod-fork.jks
-rm key.pem cert.pem
+scripts/createForkSigningKey.sh
 ```
+
+The script:
+
+- creates the key at `~/.antennapod-fork/antennapod-fork.keystore`. It sits **outside** the repository, so `git clean` can never delete it. To put it somewhere else, pass a path as the first argument.
+- generates a random 32-character password. You never have to invent or type one.
+- writes `.env` in the repository root with the four values the release workflow needs: `FORK_KEYSTORE_BASE64`, `FORK_KEYSTORE_PASSWORD`, `FORK_KEY_ALIAS` and `FORK_KEY_PASSWORD`. `.env` is listed in `.gitignore`, so it can't be committed by accident.
+- makes both files readable only by you.
+- refuses to run if either file already exists, so it can never overwrite a key you're using.
 
 ### 2. Back it up
 
-**Back up `antennapod-fork.jks` and its password**, for example in your password manager. If you lose it, future builds can't update the installed app. You'd have to export your data, uninstall, install again and import.
+**Back up `antennapod-fork.keystore` and `.env`**, for example as attachments in your password manager. `.env` alone is enough to restore everything, because it contains the key (base64) and its password. `git clean -fdx` deletes ignored files such as `.env`, so restore it from the backup if that ever happens. If you lose both, future builds can't update the installed app. You'd have to export your data, uninstall, install again and import.
 
-### 3. Encode it for GitHub
+### 3. Upload the secrets
 
-| System | Command |
-|---|---|
-| Linux | `base64 -w0 antennapod-fork.jks > keystore.txt` |
-| macOS | `base64 -i antennapod-fork.jks -o keystore.txt` |
-| Windows (PowerShell) | `[Convert]::ToBase64String([IO.File]::ReadAllBytes("antennapod-fork.jks")) \| Set-Content keystore.txt` |
+With the [GitHub CLI](https://cli.github.com/), after `gh auth login`:
 
-### 4. Add four repository secrets
+```sh
+gh secret set -f .env --repo fogolin/AntennaPod
+```
 
-Go to https://github.com/fogolin/AntennaPod/settings/secrets/actions and choose **New repository secret**:
+Without it, open https://github.com/fogolin/AntennaPod/settings/secrets/actions. For each line of `.env`, choose **New repository secret**: the name is the part before `=`, and the value is everything after it.
+
+Check that the page lists `FORK_KEYSTORE_BASE64`, `FORK_KEYSTORE_PASSWORD`, `FORK_KEY_ALIAS` and `FORK_KEY_PASSWORD`.
+
+### Manual alternative (without the script)
+
+```sh
+keytool -genkeypair -keystore antennapod-fork.keystore -storetype PKCS12 -alias antennapod-fork \
+    -keyalg RSA -keysize 4096 -validity 10000
+base64 < antennapod-fork.keystore | tr -d '\n' > keystore.txt
+```
+
+Then add the four secrets by hand:
 
 | Secret | Value |
 |---|---|
 | `FORK_KEYSTORE_BASE64` | the contents of `keystore.txt` |
-| `FORK_KEYSTORE_PASSWORD` | the keystore password |
+| `FORK_KEYSTORE_PASSWORD` | your password |
 | `FORK_KEY_ALIAS` | `antennapod-fork` |
-| `FORK_KEY_PASSWORD` | the same password, unless you set a separate key password |
+| `FORK_KEY_PASSWORD` | the same password |
 
-If you use the GitHub CLI, `gh secret set FORK_KEYSTORE_BASE64 < keystore.txt` does the first one.
-
-Then delete `keystore.txt`.
+Delete `keystore.txt` afterwards.
 
 ## First install (replacing the official app)
 

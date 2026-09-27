@@ -20,6 +20,8 @@ Details are in [ADR-0008](../decisions/ADR-0008-fork-release-builds.md).
 | File | Change |
 |---|---|
 | `.github/workflows/fork-release.yml` | **New.** On every push to `multiple-queues` (and on a manual run):<br>1. validate the Gradle wrapper;<br>2. restore the signing key from secrets;<br>3. set `versionName` to `<upstream>-mq.<run>`;<br>4. build `:app:assemblePlayRelease`;<br>5. publish a GitHub Release with the APK and its SHA-256;<br>6. remove the key. |
+| `scripts/createForkSigningKey.sh` | **New** (added at the user's request, to keep the secrets in a local `.env`). It creates a PKCS12 key outside the repo with a random password, and writes `.env` with the four secrets in the format `gh secret set -f` reads. Style follows the existing `scripts/*.sh`. |
+| `.gitignore` | `.env` added. `*.keystore` was already ignored. |
 | `docs/maintenance/release-builds.md` | **New.** Key creation and backup, GitHub secrets, first install, Obtainium updates, limitations, troubleshooting. |
 | `docs/…` | ADR-0008, the security and performance reviews, this log, and the index. The workflow now starts with an upstream sync step (the user's rule). |
 
@@ -40,13 +42,15 @@ Details are in [ADR-0008](../decisions/ADR-0008-fork-release-builds.md).
 | Tool | Result |
 |---|---|
 | `actionlint` with `shellcheck` | clean |
+| `shellcheck` on `createForkSigningKey.sh` | clean |
+| Script dry run in a throwaway clone | `.env` ignored by git, files mode `600`, the keystore decodes byte-identical the way the workflow does it, `keytool` reads it, `jarsigner` signs with it, and a second run refuses to overwrite |
 | Version `sed` step, tested on a copy of `app/build.gradle` | works |
 
 The workflow can't run before it's merged, because it only triggers on `multiple-queues`. This PR's own CI (`checks.yml`) isn't affected: no app code changed.
 
 ## How to test (after merging)
 
-1. **Before merging,** create the signing key and add the four secrets, following [release-builds.md](../maintenance/release-builds.md) steps 1–4. If you merge first, the release run fails with "Signing key missing". Add the secrets afterwards and choose **Re-run jobs** on that run.
+1. **Before merging,** run `scripts/createForkSigningKey.sh` from your clone, back up the two files, and upload the secrets with `gh secret set -f .env --repo fogolin/AntennaPod`. See [release-builds.md](../maintenance/release-builds.md). If you merge first, the release run fails with "Signing key missing". Add the secrets afterwards and choose **Re-run jobs** on that run.
 2. **Merge this PR.** Under **Actions**, the **Fork release** run should go green in about 15 minutes.
 3. **Check the release.** Under **Releases** there's `v3.12.1-mq.<n>` with `AntennaPod-3.12.1-mq.<n>.apk` and its `.sha256`.
 4. **Install it.** Follow "First install" in release-builds.md: export, uninstall the official app, install, import.
