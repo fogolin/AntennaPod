@@ -66,11 +66,13 @@ These are the files this feature changes, with upstream commits over the last 12
 | `DBWriter` | 8 |
 | `ui/screen/queue` | 8 |
 | `UserPreferences` | 5 |
+| Phase 5: `FeedPreferences`, `FeedPreferencesCursor`, `FeedDatabaseWriter`, `DownloadServiceInterfaceImpl`, `FeedSettingsPreferenceFragment`, `feed_settings.xml` | 1 each |
 
 Most conflicts will be neighbouring-line edits. The ones that need care:
 
 - **Upstream bumps `VERSION` or adds `DBUpgrader` blocks.** No conflict with the fork's migration, because it lives in `onOpen` (ADR-0002). Just keep upstream's changes.
 - **Upstream changes `setQueue` or a queue query in `PodDBAdapter`.** Re-apply the `queueId` parameter and the `queue = ?` filter.
+- **Upstream adds a podcast setting (a new `Feeds` column).** Keep both. The fork's `feed_queue` lines sit in the middle of the column lists, not at the end where upstream appends, so these usually merge cleanly. If upstream ships a per-podcast enqueue setting (PR #8215), check that the two settings still make sense together.
 - **Upstream ships its own multiple queues.** Stop and plan a migration from the fork schema to theirs. Their migration will see an existing `queue` column only if they chose the same name.
 
 ## Going back to the official app

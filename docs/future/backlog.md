@@ -6,7 +6,10 @@ These items are deferred on purpose. Each one needs its own discussion before it
 
 | Item | Notes |
 |---|---|
-| Per-podcast or tag-based routing into queues | keunes, Oct 2025. ByteHamster, 2022: prefer the tagging feature over new per-subscription state. The most requested follow-up. Overlaps with upstream PR #8215 (enqueue location per podcast). |
+| ~~Per-podcast routing into queues~~ | Done in phase 5 for automatic adds ([ADR-0010](../decisions/ADR-0010-podcast-queue.md)). |
+| Tag-based routing into queues | ByteHamster, 2022: prefer the tagging feature over new per-subscription state. Would sit on top of the phase 5 setting, and needs a tie-break for podcasts with two linked tags. |
+| Several queues per podcast | keunes, Oct 2025. Needs a rule for which one an episode goes to. |
+| Manual adds that follow the podcast's queue (optional setting) | The user chose automatic-only routing in phase 5. |
 | Smart/automatic queues | Upstream #307. Explicitly after manual queues. |
 | "Move to queue…" / choose the queue when adding | Needs a picker. Upstream rejected a picker as the *default* flow, not as an extra action. |
 | Per-queue keep-sorted, sort order, lock and enqueue location | keunes expects each queue to keep its own settings. v1 keeps them global (ADR-0006, D4). |

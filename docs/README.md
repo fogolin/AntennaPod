@@ -51,13 +51,14 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
   - [phase 2, UI](phases/phase-2-ui.md)
   - [phase 3, release builds](phases/phase-3-release.md)
   - [phase 4, upstream sync](phases/phase-4-sync.md)
+  - [phase 5, a queue per podcast](phases/phase-5-routing.md)
 - Findings:
   - [upstream research](findings/upstream-research.md)
   - [codebase map](findings/codebase-map.md)
   - [environment](findings/environment.md)
 - Reviews:
-  - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md), [phase 3](security/phase-3.md), [phase 4](security/phase-4.md)
-  - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md), [phase 3](perf/phase-3.md), [phase 4](perf/phase-4.md)
+  - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md), [phase 3](security/phase-3.md), [phase 4](security/phase-4.md), [phase 5](security/phase-5.md)
+  - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md), [phase 3](perf/phase-3.md), [phase 4](perf/phase-4.md), [phase 5](perf/phase-5.md)
 - Maintenance:
   - [fork sync, automatic and manual](maintenance/fork-sync.md)
   - [release builds and installing](maintenance/release-builds.md)
