@@ -17,18 +17,19 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
 | `security/` | The security review done at the end of each phase. |
 | `perf/` | The performance, reuse and simplification review done at the end of each phase. |
 | `future/` | Backlog: deferred features, known limitations, ideas. |
-| `maintenance/` | How to keep the fork in sync with upstream, how to install and test builds, and how to go back to the official app. |
+| `maintenance/` | How to keep the fork in sync with upstream, how release builds are made and installed, and how to go back to the official app. |
 
 ## Branches
 
 | Branch | Purpose |
 |---|---|
 | `develop` | Mirror of upstream `develop`. Never committed to directly. |
-| `multiple-queues` | Integration branch: the fork's "product" branch. Phases are merged here after they have been tested. |
+| `multiple-queues` | Integration branch: the fork's "product" branch. Phases are merged here after they have been tested. Every push here builds a signed release (see [maintenance/release-builds.md](maintenance/release-builds.md)). |
 | `mq/phase-N-<name>` | One branch per phase, cut from `multiple-queues`, or from the previous phase branch while that one is awaiting approval. It is opened as a PR so CI builds an APK for testing. |
 
 ## Workflow per phase
 
+0. **Sync with upstream first** (the user's rule): fetch `upstream`, fast-forward the fork's `develop`, and if upstream `develop` has commits that `multiple-queues` lacks, merge them into the new phase branch. That way they go through CI and the user's approval with the phase PR.
 1. Create the branch `mq/phase-N-<name>` from `multiple-queues`.
 2. Look for existing code to reuse first. The findings go into the phase log.
 3. Implement, with tests, following upstream `AGENTS.md`: minimal diff, no comments in code, English strings only.
@@ -47,12 +48,15 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
   - [phase 0, setup](phases/phase-0-setup.md)
   - [phase 1, storage](phases/phase-1-storage.md)
   - [phase 2, UI](phases/phase-2-ui.md)
+  - [phase 3, release builds](phases/phase-3-release.md)
 - Findings:
   - [upstream research](findings/upstream-research.md)
   - [codebase map](findings/codebase-map.md)
   - [environment](findings/environment.md)
 - Reviews:
-  - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md)
-  - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md)
-- Maintenance: [maintenance/fork-sync.md](maintenance/fork-sync.md)
+  - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md), [phase 3](security/phase-3.md)
+  - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md), [phase 3](perf/phase-3.md)
+- Maintenance:
+  - [fork sync](maintenance/fork-sync.md)
+  - [release builds and installing](maintenance/release-builds.md)
 - Backlog: [future/backlog.md](future/backlog.md)

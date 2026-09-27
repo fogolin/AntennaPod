@@ -29,5 +29,5 @@ These items are deferred on purpose. Each one needs its own discussion before it
 
 ## Fork operations
 
-- A scheduled task that merges every upstream release into `multiple-queues`, lets CI build it and reports the result. See [maintenance/fork-sync.md](../maintenance/fork-sync.md).
-- Optional: a release-signed APK with its own key, so updates don't need the debug build. See the maintenance doc.
+- **Next: automatic upstream sync.** A scheduled task that notices new upstream releases, merges them into a `sync/<tag>` branch and opens a PR into `multiple-queues`. CI tests it, the user approves, and the merge triggers a new release build. Scheduled GitHub workflows only run from the default branch, so the fork's default branch would move from `develop` to `multiple-queues`.
+- ~~A release-signed APK with its own key~~: done in phase 3 ([release-builds.md](../maintenance/release-builds.md)).

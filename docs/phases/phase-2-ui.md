@@ -107,4 +107,5 @@ Install the APK from [CI run 36329200192](https://github.com/fogolin/AntennaPod/
 
 This confirms the API 23 debug failure came from the test, not the app. The artifact `app-play-debug.apk` (about 21 MB) is attached to this run.
 
-- **Manual test:** pending the user.
+- **Merged** by the user through PR #3 (merge commit `cf8e5f9`) on 2026-09-27.
+- **Manual test:** the user tested it on their phone and reported it "working great".
