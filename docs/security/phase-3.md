@@ -1,0 +1,18 @@
+# Security review: phase 3 (release builds)
+
+- **Scope:** `.github/workflows/fork-release.yml`, the signing setup and the release distribution
+- **Date:** 2026-09-27
+- **Result:** no open findings. Two items are the user's responsibility (R8, R9).
+
+| # | Area | Finding | Status |
+|---|---|---|---|
+| R1 | Secret exposure through PRs | The workflow has no `pull_request` or `pull_request_target` trigger. It runs only on pushes to `multiple-queues` (merges the user approves) and manual runs, and the job is guarded with `if: github.ref == 'refs/heads/multiple-queues'`. Code from an unmerged PR never runs with the signing key. | OK |
+| R2 | Secrets in logs or process lists | Passwords go to Gradle as `ORG_GRADLE_PROJECT_*` environment variables, not command-line arguments. GitHub masks secret values in logs. The keystore is decoded to `$RUNNER_TEMP` (outside the checkout, so it can't be committed or uploaded) and deleted in an `always()` step. The runner is ephemeral anyway. | OK |
+| R3 | Token scope | `permissions: contents: write` only, which is needed to create the release and tag. No other scopes. | OK |
+| R4 | Supply chain | Every action is pinned to the same commit SHAs `checks.yml` uses: checkout, setup-java, cache, wrapper-validation. There are no third-party actions: publishing uses the `gh` CLI preinstalled on the runner. The Gradle wrapper is validated before the build, so a tampered `gradle-wrapper.jar` arriving from an upstream sync would stop the release. | OK |
+| R5 | Shell injection | The only values interpolated into shell come from repository content (`versionName`) and GitHub-provided variables (`GITHUB_RUN_NUMBER`, `GITHUB_SHA`). All are quoted, and none come from issue or PR text. `actionlint` and `shellcheck` report no findings. | OK |
+| R6 | Integrity of the download | Each release ships an `.apk.sha256` next to the APK. Android also checks the APK signature on every update: an APK signed with another key can't replace the installed fork. | OK |
+| R7 | Concurrency | `concurrency: fork-release` serialises releases, so two quick merges can't race on tags. `cancel-in-progress: false` keeps a running release intact. | OK |
+| R8 | Key loss or theft | This is the user's responsibility, and it's documented. Loss means no more in-place updates. Theft would let someone build an APK that updates the user's install, but only if they could also get it onto the phone. Mitigation: a strong password, a backup in a password manager, and deleting `keystore.txt` after uploading. | Documented in [release-builds.md](../maintenance/release-builds.md) |
+| R9 | Installing from unknown sources | Needed once for the first install, and permanently for Obtainium. That's a standard trade-off for apps from outside a store. Only allow it for the browser or file manager and for Obtainium. | Documented |
+| R10 | App permissions and behaviour | Unchanged. The release build is upstream's code plus the reviewed phase 1 and 2 changes, shrunk by R8. R8 was already exercised in CI by the release emulator tests on phases 1 and 2. | OK |

@@ -47,11 +47,12 @@ Most conflicts will be neighbouring-line edits. The ones that need care:
 ## Going back to the official app
 
 1. In the fork: Settings → Backup & restore → Database export.
-2. In the official app: Database import.
+2. Uninstall the fork. It uses the same application id as the official app, but a different signature.
+3. Install the official app, then Database import.
 
 This works because the fork keeps upstream's database version (ADR-0002). All queues appear merged into one list, and nothing is lost.
 
 ## Installing builds
 
-- CI produces `app-play-debug.apk` (application id `de.danoeh.antennapod.debug`). It installs next to the official app.
-- To replace the official app entirely, you'd need a release build signed with your own key. The official app can't be updated in place, because the signatures differ. You'd uninstall it after a database export, install the fork build, then import.
+- **PRs:** CI produces `app-play-debug.apk` (application id `de.danoeh.antennapod.debug`) for testing. It installs next to any other install.
+- **Everyday use:** every merge into `multiple-queues` publishes a signed release that replaces the official app. See [release-builds.md](release-builds.md). Merging a sync PR therefore also produces an updated app with the new upstream code.

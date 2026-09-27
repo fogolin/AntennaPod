@@ -26,6 +26,13 @@ GitHub **release downloads** are reachable, so two of CI's style tools run in th
 | `android-xml-formatter` 1.1.0 | The same jar `checks.yml` downloads | `java -jar android-xml-formatter.jar <layout.xml>`, then check `git diff` |
 | Checkstyle 10.12.0 | `checkstyle-10.12.0-all.jar` from the checkstyle GitHub releases, the version `common.gradle` pins | `java -Dconfig_loc=config/checkstyle -jar checkstyle.jar -c config/checkstyle/checkstyle.xml <files>` |
 
+Phase 3 added two more, also from GitHub releases:
+
+| Tool | Command |
+|---|---|
+| `actionlint` 1.7.7 | `PATH=<dir with shellcheck>:$PATH actionlint .github/workflows/<file>.yml` |
+| `shellcheck` 0.10.0 | Used by `actionlint` for `run:` blocks |
+
 Compiling, lint and tests still need CI.
 
 ## Reading CI failures
