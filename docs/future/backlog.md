@@ -11,7 +11,8 @@ These items are deferred on purpose. Each one needs its own discussion before it
 | Several queues per podcast | keunes, Oct 2025. Needs a rule for which one an episode goes to. |
 | Manual adds that follow the podcast's queue (optional setting) | The user chose automatic-only routing in phase 5. |
 | Smart/automatic queues | Upstream #307. Explicitly after manual queues. |
-| "Move to queue…" / choose the queue when adding | Needs a picker. Upstream rejected a picker as the *default* flow, not as an extra action. |
+| ~~"Move to queue…" / choose the queue when adding~~ | Done in phase 6 as extra actions ([ADR-0011](../decisions/ADR-0011-queue-picker.md)). |
+| "New queue…" inside the queue picker | Left out in phase 6. Creating a queue also activates it today, which a picker flow shouldn't do. |
 | Per-queue keep-sorted, sort order, lock and enqueue location | keunes expects each queue to keep its own settings. v1 keeps them global (ADR-0006, D4). |
 | Show the active queue on the player screen, notification and widget, and switch from there | keunes' indicator list. |
 | Android Auto and Wear: browse all queues | v1 exposes the active queue only. Coordinate with upstream PR #8466. |

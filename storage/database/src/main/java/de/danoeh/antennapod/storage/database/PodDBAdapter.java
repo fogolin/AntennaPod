@@ -375,6 +375,7 @@ public class PodDBAdapter {
 
     private static Context context;
     private static PodDBAdapter instance;
+    private static volatile boolean hasCustomQueues;
 
     private final SQLiteDatabase db;
     private final PodDBHelper dbHelper;
@@ -451,6 +452,7 @@ public class PodDBAdapter {
             for (String tableName : ALL_TABLES) {
                 adapter.db.delete(tableName, "1", null);
             }
+            hasCustomQueues = false;
             return true;
         } finally {
             adapter.close();
@@ -931,7 +933,11 @@ public class PodDBAdapter {
     public long insertQueue(String title) {
         ContentValues values = new ContentValues();
         values.put(KEY_TITLE, title);
-        return db.insert(TABLE_NAME_QUEUES, null, values);
+        long queueId = db.insert(TABLE_NAME_QUEUES, null, values);
+        if (queueId != -1) {
+            hasCustomQueues = true;
+        }
+        return queueId;
     }
 
     public void setQueueTitle(long queueId, String title) {
@@ -954,6 +960,11 @@ public class PodDBAdapter {
         } finally {
             db.endTransaction();
         }
+        hasCustomQueues = DatabaseUtils.queryNumEntries(db, TABLE_NAME_QUEUES) > 0;
+    }
+
+    public static boolean hasCustomQueues() {
+        return hasCustomQueues;
     }
 
     /**
@@ -1123,6 +1134,12 @@ public class PodDBAdapter {
 
     public Cursor getQueuedItemIdsCursor(long... itemIds) {
         final String query = "SELECT " + KEY_FEEDITEM + " FROM " + TABLE_NAME_QUEUE
+                + " WHERE " + KEY_FEEDITEM + " IN (" + getItemIds(itemIds) + ")";
+        return db.rawQuery(query, null);
+    }
+
+    public Cursor getQueueIdsOfItemsCursor(long... itemIds) {
+        final String query = "SELECT DISTINCT " + KEY_QUEUE + " FROM " + TABLE_NAME_QUEUE
                 + " WHERE " + KEY_FEEDITEM + " IN (" + getItemIds(itemIds) + ")";
         return db.rawQuery(query, null);
     }
@@ -1696,6 +1713,7 @@ public class PodDBAdapter {
         public void onOpen(final SQLiteDatabase db) {
             super.onOpen(db);
             DBUpgrader.upgradeMultipleQueues(db);
+            hasCustomQueues = !db.isReadOnly() && DatabaseUtils.queryNumEntries(db, TABLE_NAME_QUEUES) > 0;
         }
     }
 }

@@ -73,4 +73,5 @@ The workspace can't reach Google Maven, so building and the unit tests run in CI
 
 ## Results
 
-- **CI on the PR:** pending.
+- **CI on the PR:** all 12 checks green, including the unit tests and emulator tests on API 23, 30 and 36.
+- **Merged** by the user through PR #7 (merge commit `0ee0c8b`). Released as [v3.12.1-mq.4](https://github.com/fogolin/AntennaPod/releases/tag/v3.12.1-mq.4).

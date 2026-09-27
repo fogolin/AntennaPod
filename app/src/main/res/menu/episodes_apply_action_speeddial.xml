@@ -33,6 +33,18 @@
         android:title="@string/remove_from_queue_label" />
 
     <item
+        android:id="@+id/move_to_other_queue_item"
+        android:icon="@drawable/ic_playlist_move"
+        android:title="@string/move_to_other_queue_label"
+        android:visible="false" />
+
+    <item
+        android:id="@+id/add_to_other_queue_item"
+        android:icon="@drawable/ic_playlist_add"
+        android:title="@string/add_to_other_queue_label"
+        android:visible="false" />
+
+    <item
         android:id="@+id/add_to_queue_item"
         android:icon="@drawable/ic_playlist_play"
         android:title="@string/add_to_queue_label" />

@@ -531,6 +531,32 @@ public class DBWriter {
         });
     }
 
+    public static Future<?> moveToQueue(final Context context, final long queueId, final FeedItem... items) {
+        return runOnDbThread(() -> {
+            final PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            final LongList itemIdsInQueue = new LongList();
+            try (Cursor cursor = adapter.getQueueIDCursor(queueId)) {
+                while (cursor.moveToNext()) {
+                    itemIdsInQueue.add(cursor.getLong(0));
+                }
+            }
+            adapter.close();
+            final List<FeedItem> itemsToMove = new ArrayList<>();
+            for (FeedItem item : items) {
+                if (!itemIdsInQueue.contains(item.getId())) {
+                    itemsToMove.add(item);
+                }
+            }
+            long[] itemIds = new long[itemsToMove.size()];
+            for (int i = 0; i < itemIds.length; i++) {
+                itemIds[i] = itemsToMove.get(i).getId();
+            }
+            removeQueueItemSynchronous(context, false, itemIds);
+            addQueueItem(context, queueId, itemsToMove.toArray(new FeedItem[0]));
+        });
+    }
+
     /**
      * Removes a FeedItem object from the queue.
      *

@@ -278,6 +278,13 @@
         <item quantity="one">%d episode added to queue.</item>
         <item quantity="other">%d episodes added to queue.</item>
     </plurals>
+    <string name="add_to_other_queue_label">Add to queue…</string>
+    <string name="move_to_other_queue_label">Move to queue…</string>
+    <string name="move_to_queue_label">Move to queue</string>
+    <plurals name="moved_to_queue_message">
+        <item quantity="one">%d episode moved to another queue.</item>
+        <item quantity="other">%d episodes moved to another queue.</item>
+    </plurals>
     <string name="remove_from_queue_label">Remove from queue</string>
     <plurals name="removed_from_queue_message">
         <item quantity="one">%d episode removed from queue.</item>
