@@ -22,6 +22,7 @@ These items are deferred on purpose. Each one needs its own discussion before it
 | Show the active queue's name in the toolbar title | ADR-0007 keeps "Queue", because the checked chip shows it. Revisit if the chips scroll out of view in practice. |
 | Reorder queues (chip order) | Chips follow creation order (`Queues.id`). |
 | Friendlier handling of a `NULL` or over-long name from an imported database | Security review phase 2, G2. Cosmetic only. |
+| Survive a read-only first open after updating | Security review phase 5, H10. The fork's columns would be missing until a launch that can write. |
 
 ## Known limitations of v1
 

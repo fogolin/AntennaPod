@@ -2,7 +2,7 @@
 
 - **Scope:** `Feeds.feed_queue` and its migration, `FeedPreferences`/`FeedPreferencesCursor`, `PodDBAdapter.setFeedPreferences` and `removeQueue`, `DBWriter.addQueueItem(context, queueId, items)`, the two automatic callers, and the podcast settings preference
 - **Date:** 2026-09-27
-- **Result:** no open findings.
+- **Result:** no open findings. One accepted risk (H10).
 
 | # | Area | Finding | Status |
 |---|---|---|---|
@@ -15,3 +15,4 @@
 | H7 | Null safety in the download path | `DownloadServiceInterfaceImpl` can get an item whose podcast wasn't loaded. The queue id is only read when both `getFeed()` and `getPreferences()` are non-null. Otherwise it uses the active queue, as before. | OK |
 | H8 | Official app on the same database | It ignores `feed_queue`, keeps it on its own `Feeds` updates (it names only its own columns), and new podcasts get the column default. Nothing it does can point a podcast at a missing queue that H2 doesn't already handle. | OK |
 | H9 | Exposure | No new activities, intents, permissions, exported components or network calls. | OK |
+| H10 | Read-only first open | Found by the independent review. If the first launch after updating can't open the database for writing (for example, a full disk), `PodDBAdapter` falls back to a read-only connection and `upgradeMultipleQueues` skips the migration. On a database that doesn't have `feed_queue` yet, every podcast query would then fail until a launch that can write. The phase 1 `queue` column already had this weakness, but only for the queue screens. Upstream's own schema upgrades fail in the same situation. Handling it would take conditional queries in several places, for a state that fixes itself on the next writable launch. | Accepted, noted in the backlog |
