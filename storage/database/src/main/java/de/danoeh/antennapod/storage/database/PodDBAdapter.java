@@ -130,6 +130,7 @@ public class PodDBAdapter {
     public static final String KEY_PODCASTINDEX_TRANSCRIPT_URL = "podcastindex_transcript_url";
     public static final String KEY_PODCASTINDEX_TRANSCRIPT_TYPE = "podcastindex_transcript_type";
     public static final String KEY_QUEUE = "queue";
+    public static final String KEY_FEED_QUEUE = "feed_queue";
 
     // Table names
     public static final String TABLE_NAME_FEEDS = "Feeds";
@@ -178,6 +179,7 @@ public class PodDBAdapter {
             + KEY_FEED_SKIP_SILENCE + " INTEGER DEFAULT " + FeedPreferences.SkipSilence.GLOBAL.code + ","
             + KEY_FEED_VOLUME_ADAPTION + " INTEGER DEFAULT 0,"
             + KEY_FEED_TAGS + " TEXT,"
+            + KEY_FEED_QUEUE + " INTEGER DEFAULT " + Queue.ACTIVE_QUEUE_ID + ","
             + KEY_FEED_SKIP_INTRO + " INTEGER DEFAULT 0,"
             + KEY_FEED_SKIP_ENDING + " INTEGER DEFAULT 0,"
             + KEY_EPISODE_NOTIFICATION + " INTEGER DEFAULT 0,"
@@ -348,6 +350,7 @@ public class PodDBAdapter {
             + TABLE_NAME_FEEDS + "." + KEY_FEED_PLAYBACK_SPEED + ", "
             + TABLE_NAME_FEEDS + "." + KEY_FEED_SKIP_SILENCE + ", "
             + TABLE_NAME_FEEDS + "." + KEY_FEED_TAGS + ", "
+            + TABLE_NAME_FEEDS + "." + KEY_FEED_QUEUE + ", "
             + TABLE_NAME_FEEDS + "." + KEY_FEED_SKIP_INTRO + ", "
             + TABLE_NAME_FEEDS + "." + KEY_FEED_SKIP_ENDING + ", "
             + TABLE_NAME_FEEDS + "." + KEY_EPISODE_NOTIFICATION + ", "
@@ -515,6 +518,7 @@ public class PodDBAdapter {
         values.put(KEY_FEED_PLAYBACK_SPEED, prefs.getFeedPlaybackSpeed());
         values.put(KEY_FEED_SKIP_SILENCE, prefs.getFeedSkipSilence().code);
         values.put(KEY_FEED_TAGS, prefs.getTagsAsString());
+        values.put(KEY_FEED_QUEUE, prefs.getQueueId());
         values.put(KEY_FEED_SKIP_INTRO, prefs.getFeedSkipIntro());
         values.put(KEY_FEED_SKIP_ENDING, prefs.getFeedSkipEnding());
         values.put(KEY_EPISODE_NOTIFICATION, prefs.getShowEpisodeNotification());
@@ -941,6 +945,9 @@ public class PodDBAdapter {
             db.beginTransactionNonExclusive();
             db.delete(TABLE_NAME_QUEUE, KEY_QUEUE + "=?", new String[]{String.valueOf(queueId)});
             db.delete(TABLE_NAME_QUEUES, KEY_ID + "=?", new String[]{String.valueOf(queueId)});
+            ContentValues values = new ContentValues();
+            values.put(KEY_FEED_QUEUE, Queue.ACTIVE_QUEUE_ID);
+            db.update(TABLE_NAME_FEEDS, values, KEY_FEED_QUEUE + "=?", new String[]{String.valueOf(queueId)});
             db.setTransactionSuccessful();
         } catch (SQLException e) {
             Log.e(TAG, Log.getStackTraceString(e));

@@ -2,6 +2,7 @@ package de.danoeh.antennapod.model.feed;
 
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
+import de.danoeh.antennapod.model.queue.Queue;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -116,6 +117,7 @@ public class FeedPreferences implements Serializable {
     private SkipSilence feedSkipSilence;
     private boolean showEpisodeNotification;
     private final Set<String> tags = new HashSet<>();
+    private long queueId = Queue.ACTIVE_QUEUE_ID;
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, AutoDeleteAction autoDeleteAction,
                            VolumeAdaptionSetting volumeAdaptionSetting, NewEpisodesAction newEpisodesAction,
@@ -313,5 +315,13 @@ public class FeedPreferences implements Serializable {
 
     public void setShowEpisodeNotification(boolean showEpisodeNotification) {
         this.showEpisodeNotification = showEpisodeNotification;
+    }
+
+    public long getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(long queueId) {
+        this.queueId = queueId;
     }
 }
