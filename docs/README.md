@@ -50,5 +50,8 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
   - [upstream research](findings/upstream-research.md)
   - [codebase map](findings/codebase-map.md)
   - [environment](findings/environment.md)
+- Reviews:
+  - security: [phase 1](security/phase-1.md)
+  - performance: [phase 1](perf/phase-1.md)
 - Maintenance: [maintenance/fork-sync.md](maintenance/fork-sync.md)
 - Backlog: [future/backlog.md](future/backlog.md)

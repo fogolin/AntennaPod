@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.playback.Playable;
+import de.danoeh.antennapod.model.queue.Queue;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -68,7 +69,7 @@ public class PlaybackServiceTaskManagerTest {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         adapter.setCompleteFeed(f);
-        adapter.setQueue(f.getItems());
+        adapter.setQueue(Queue.DEFAULT_QUEUE_ID, f.getItems());
         adapter.close();
 
         for (FeedItem item : f.getItems()) {

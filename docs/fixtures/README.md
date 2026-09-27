@@ -10,6 +10,13 @@
   - Multi-queue tests create queues with `adapter.insertQueue(title)`, which returns the new id, and switch with `UserPreferences.setActiveQueueId(id)`.
 - **Preferences:** Robolectric gives each test a fresh `SharedPreferences`, so `prefActiveQueue` starts at `0`.
 
+## Test classes added by this fork
+
+| Class | Module | What it builds |
+|---|---|---|
+| `DbMultipleQueuesTest` | `net/download/service` (test) | One feed with 6 items that have media (`saveFeedlist(1, 6, true)`). Queues are created with `adapter.insertQueue`, filled with `adapter.setQueue(queueId, ...)`, and checked by reading `getQueueIDCursor(queueId)` in order. |
+| `DBUpgraderMultipleQueuesTest` | `storage/database` (test) | An in-memory SQLite database with the **upstream** `Queue` schema (`id, feeditem, feed`) and two rows, then runs `DBUpgrader.upgradeMultipleQueues`. It also simulates the official app writing rows without the `queue` column. |
+
 ## Manual scenarios
 
 Each phase log has its own checklist. The shared setup:

@@ -33,6 +33,7 @@ import de.danoeh.antennapod.model.feed.FeedCounter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.SubscriptionsFilter;
+import de.danoeh.antennapod.model.queue.Queue;
 
 /**
  * Provides access to preferences set by the user in the settings screen. A
@@ -125,6 +126,7 @@ public abstract class UserPreferences {
     private static final String PREF_FAST_FORWARD_SECS = "prefFastForwardSecs";
     private static final String PREF_REWIND_SECS = "prefRewindSecs";
     private static final String PREF_QUEUE_LOCKED = "prefQueueLocked";
+    private static final String PREF_ACTIVE_QUEUE = "prefActiveQueue";
 
     // Experimental
     public static final int EPISODE_CLEANUP_QUEUE = -1;
@@ -678,6 +680,14 @@ public abstract class UserPreferences {
 
     public static void setQueueLocked(boolean locked) {
         prefs.edit().putBoolean(PREF_QUEUE_LOCKED, locked).apply();
+    }
+
+    public static long getActiveQueueId() {
+        return prefs.getLong(PREF_ACTIVE_QUEUE, Queue.DEFAULT_QUEUE_ID);
+    }
+
+    public static void setActiveQueueId(long queueId) {
+        prefs.edit().putLong(PREF_ACTIVE_QUEUE, queueId).apply();
     }
 
     private static List<Float> readPlaybackSpeedArray(String valueFromPrefs) {

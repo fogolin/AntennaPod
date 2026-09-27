@@ -26,6 +26,7 @@ There are two concepts, and the code keeps them apart:
 | Move, sort, clear, lock, keep sorted | Active queue. Lock and keep-sorted are global preferences. | `DBWriter` |
 | Next episode | Next in the active queue. If the finished episode isn't in it, playback stops. | `PodDBAdapter.getNextInQueue` |
 | Switch queue | Takes effect immediately. Current playback continues. | `DBWriter.switchQueue` |
+| Create a queue | The new queue becomes the active one, so the user lands in it. | `DBWriter.createQueue` |
 | Delete a queue | After confirmation, its episodes are unqueued. If it was active, the default queue becomes active. | `DBWriter.deleteQueue` |
 | Database import with an unknown active queue | Falls back to the default queue. | `DBReader.getActiveQueueId` |
 | Round trip with the official app | Works. The official app shows all queues merged into one list. See ADR-0002. | schema |
@@ -41,6 +42,6 @@ There are two concepts, and the code keeps them apart:
 
 | Phase | Branch | Content | Status |
 |---|---|---|---|
-| 0 | `mq/phase-0-setup` | Docs, branches, research | done |
-| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | in review |
+| 0 | `mq/phase-0-setup` | Docs, branches, research | merged (PR #1) |
+| 1 | `mq/phase-1-storage` | Schema, migration, queue-scoped `DBReader`/`DBWriter`, preference, events, tests | PR #2, CI green, awaiting manual test and approval |
 | 2 | `mq/phase-2-ui` | Chips, new/rename/delete, strings, Android Auto count, swipe undo guard | not started |

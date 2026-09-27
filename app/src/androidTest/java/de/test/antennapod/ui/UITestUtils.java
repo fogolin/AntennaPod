@@ -10,6 +10,7 @@ import de.danoeh.antennapod.event.QueueEvent;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 import de.test.antennapod.util.service.download.HTTPBin;
 import de.test.antennapod.util.syndication.feedgenerator.Rss2Generator;
@@ -191,7 +192,7 @@ public class UITestUtils {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         adapter.setCompleteFeed(hostedFeeds.toArray(new Feed[0]));
-        adapter.setQueue(queue);
+        adapter.setQueue(Queue.DEFAULT_QUEUE_ID, queue);
         adapter.close();
         EventBus.getDefault().post(new FeedListUpdateEvent(hostedFeeds));
         EventBus.getDefault().post(QueueEvent.setQueue(queue));

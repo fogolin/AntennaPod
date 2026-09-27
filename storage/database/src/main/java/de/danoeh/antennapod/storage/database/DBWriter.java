@@ -49,6 +49,7 @@ import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.playback.Playable;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
 
 /**
@@ -210,11 +211,15 @@ public class DBWriter {
      * Deleting media also removes the download log entries.
      */
     private static void deleteFeedItemsSynchronous(@NonNull Context context, @NonNull List<FeedItem> items) {
-        List<FeedItem> queue = DBReader.getQueue();
+        long[] itemIds = new long[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            itemIds[i] = items.get(i).getId();
+        }
+        LongList queuedItemIds = DBReader.getQueuedItemIds(itemIds);
         List<FeedItem> removedFromQueue = new ArrayList<>();
         List<FeedItem> deleted = new ArrayList<>();
         for (FeedItem item : items) {
-            if (queue.remove(item)) {
+            if (queuedItemIds.contains(item.getId())) {
                 removedFromQueue.add(item);
             }
             if (item.getMedia() != null) {
@@ -237,9 +242,6 @@ public class DBWriter {
 
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        if (!removedFromQueue.isEmpty()) {
-            adapter.setQueue(queue);
-        }
         adapter.removeFeedItems(items);
         adapter.close();
 
@@ -347,13 +349,14 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final long queueId = DBReader.getActiveQueueId();
+            final List<FeedItem> queue = DBReader.getQueue(queueId);
 
-            if (!itemListContains(queue, itemId)) {
+            if (!DBReader.getQueuedItemIds(itemId).contains(itemId)) {
                 FeedItem item = DBReader.getFeedItem(itemId);
                 if (item != null) {
                     queue.add(index, item);
-                    adapter.setQueue(queue);
+                    adapter.setQueue(queueId, queue);
                     item.addTag(FeedItem.TAG_QUEUE);
                     EventBus.getDefault().post(QueueEvent.added(item, index));
                     EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item), false));
@@ -383,7 +386,13 @@ public class DBWriter {
 
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final long queueId = DBReader.getActiveQueueId();
+            final List<FeedItem> queue = DBReader.getQueue(queueId);
+            long[] itemIds = new long[items.length];
+            for (int i = 0; i < items.length; i++) {
+                itemIds[i] = items[i].getId();
+            }
+            final LongList queuedItemIds = DBReader.getQueuedItemIds(itemIds);
 
             List<FeedItem>  markAsUnplayed = new ArrayList<>();
             List<QueueEvent> events = new ArrayList<>();
@@ -393,7 +402,7 @@ public class DBWriter {
             Playable currentlyPlaying = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
             int insertPosition = positionCalculator.calcPosition(queue, currentlyPlaying);
             for (FeedItem item : items) {
-                if (itemListContains(queue, item.getId())) {
+                if (itemListContains(queue, item.getId()) || queuedItemIds.contains(item.getId())) {
                     continue;
                 } else if (!item.hasMedia()) {
                     continue;
@@ -410,7 +419,7 @@ public class DBWriter {
             }
             if (!updatedItems.isEmpty()) {
                 applySortOrder(queue, events);
-                adapter.setQueue(queue);
+                adapter.setQueue(queueId, queue);
                 for (QueueEvent event : events) {
                     EventBus.getDefault().post(event);
                 }
@@ -456,9 +465,60 @@ public class DBWriter {
         return runOnDbThread(() -> {
             PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            adapter.clearQueue();
+            adapter.clearQueue(DBReader.getActiveQueueId());
             adapter.close();
             EventBus.getDefault().post(QueueEvent.cleared());
+        });
+    }
+
+    public static Future<?> createQueue(final String title) {
+        return runOnDbThread(() -> {
+            final PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            final long queueId = adapter.insertQueue(title);
+            adapter.close();
+            if (queueId != -1) {
+                UserPreferences.setActiveQueueId(queueId);
+            }
+            EventBus.getDefault().post(QueueEvent.queuesChanged());
+        });
+    }
+
+    public static Future<?> renameQueue(final long queueId, final String title) {
+        return runOnDbThread(() -> {
+            final PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            adapter.setQueueTitle(queueId, title);
+            adapter.close();
+            EventBus.getDefault().post(QueueEvent.queuesChanged());
+        });
+    }
+
+    public static Future<?> deleteQueue(final long queueId) {
+        return runOnDbThread(() -> {
+            if (queueId == Queue.DEFAULT_QUEUE_ID) {
+                return;
+            }
+            final PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            final List<FeedItem> removedItems = DBReader.getQueue(queueId);
+            if (DBReader.getActiveQueueId() == queueId) {
+                UserPreferences.setActiveQueueId(Queue.DEFAULT_QUEUE_ID);
+            }
+            adapter.removeQueue(queueId);
+            adapter.close();
+            for (FeedItem item : removedItems) {
+                item.removeTag(FeedItem.TAG_QUEUE);
+            }
+            EventBus.getDefault().post(QueueEvent.queuesChanged());
+            EventBus.getDefault().post(new FeedItemEvent(removedItems, false));
+        });
+    }
+
+    public static Future<?> switchQueue(final long queueId) {
+        return runOnDbThread(() -> {
+            UserPreferences.setActiveQueueId(queueId);
+            EventBus.getDefault().post(QueueEvent.queuesChanged());
         });
     }
 
@@ -487,21 +547,19 @@ public class DBWriter {
         }
         final PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        final List<FeedItem> queue = DBReader.getQueue();
+        final LongList queuedItemIds = DBReader.getQueuedItemIds(itemIds);
 
         boolean queueModified = false;
         List<QueueEvent> events = new ArrayList<>();
         List<FeedItem> updatedItems = new ArrayList<>();
         for (long itemId : itemIds) {
-            int position = indexInItemList(queue, itemId);
-            if (position >= 0) {
+            if (queuedItemIds.contains(itemId)) {
                 final FeedItem item = DBReader.getFeedItem(itemId);
                 if (item == null) {
                     Log.e(TAG, "removeQueueItem - item in queue but somehow cannot be loaded."
                             + " Item ignored. It should never happen. id:" + itemId);
                     continue;
                 }
-                queue.remove(position);
                 item.removeTag(FeedItem.TAG_QUEUE);
                 events.add(QueueEvent.removed(item));
                 updatedItems.add(item);
@@ -511,7 +569,7 @@ public class DBWriter {
             }
         }
         if (queueModified) {
-            adapter.setQueue(queue);
+            adapter.removeQueueItems(itemIds);
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
             }
@@ -570,13 +628,14 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final long queueId = DBReader.getActiveQueueId();
+            final List<FeedItem> queue = DBReader.getQueue(queueId);
 
             if (from >= 0 && from < queue.size() && to >= 0 && to < queue.size()) {
                 final FeedItem item = queue.remove(from);
                 queue.add(to, item);
 
-                adapter.setQueue(queue);
+                adapter.setQueue(queueId, queue);
                 if (broadcastUpdate) {
                     EventBus.getDefault().post(QueueEvent.moved(item, to));
                 }
@@ -600,7 +659,8 @@ public class DBWriter {
 
         final PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        final List<FeedItem> queue = DBReader.getQueue();
+        final long queueId = DBReader.getActiveQueueId();
+        final List<FeedItem> queue = DBReader.getQueue(queueId);
 
         List<FeedItem> selectedItems = moveToTop ? new ArrayList<>(items) : items;
         if (moveToTop) {
@@ -621,7 +681,7 @@ public class DBWriter {
         }
 
         if (queueModified) {
-            adapter.setQueue(queue);
+            adapter.setQueue(queueId, queue);
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
             }
@@ -900,10 +960,11 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final long queueId = DBReader.getActiveQueueId();
+            final List<FeedItem> queue = DBReader.getQueue(queueId);
 
             permutor.reorder(queue);
-            adapter.setQueue(queue);
+            adapter.setQueue(queueId, queue);
             if (broadcastUpdate) {
                 EventBus.getDefault().post(QueueEvent.sorted(queue));
             }
