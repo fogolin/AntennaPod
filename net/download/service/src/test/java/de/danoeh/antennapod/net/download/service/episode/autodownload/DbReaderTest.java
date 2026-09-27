@@ -21,6 +21,7 @@ import de.danoeh.antennapod.model.feed.FeedOrder;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.NavDrawerData;
@@ -189,7 +190,7 @@ public class DbReaderTest {
             }
             PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            adapter.setQueue(queue);
+            adapter.setQueue(Queue.DEFAULT_QUEUE_ID, queue);
             adapter.close();
             return queue;
         }
@@ -345,7 +346,8 @@ public class DbReaderTest {
                 feed.getItems().get(0).setNew();
                 adapter.setCompleteFeed(feed);
             }
-            adapter.setQueue(Arrays.asList(feeds.get(0).getItems().get(0), feeds.get(2).getItems().get(0),
+            adapter.setQueue(Queue.DEFAULT_QUEUE_ID,
+                    Arrays.asList(feeds.get(0).getItems().get(0), feeds.get(2).getItems().get(0),
                     feeds.get(3).getItems().get(0), feeds.get(4).getItems().get(0),
                     feeds.get(5).getItems().get(0), noMediaFeed.getItems().get(0)));
             adapter.close();
@@ -428,7 +430,7 @@ public class DbReaderTest {
                 FeedItem item = feeds.get(1).getItems().get(i);
                 queue.add(item);
             }
-            adapter.setQueue(queue);
+            adapter.setQueue(Queue.DEFAULT_QUEUE_ID, queue);
 
             adapter.close();
 

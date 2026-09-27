@@ -25,10 +25,12 @@ import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.SubscriptionsFilter;
 import de.danoeh.antennapod.model.download.DownloadResult;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.storage.database.mapper.ChapterCursor;
 import de.danoeh.antennapod.storage.database.mapper.DownloadResultCursor;
 import de.danoeh.antennapod.storage.database.mapper.FeedCursor;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemCursor;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
  * Provides methods for reading data from the AntennaPod database.
@@ -164,7 +166,7 @@ public final class DBReader {
         Log.d(TAG, "getQueueIDList() called");
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (Cursor cursor = adapter.getQueueIDCursor()) {
+        try (Cursor cursor = adapter.getQueueIDCursor(getActiveQueueId())) {
             LongList queueIds = new LongList(cursor.getCount());
             while (cursor.moveToNext()) {
                 queueIds.add(cursor.getLong(0));
@@ -200,14 +202,64 @@ public final class DBReader {
      */
     @NonNull
     public static synchronized List<FeedItem> getQueue() {
-        Log.d(TAG, "getQueue() called");
+        return getQueue(getActiveQueueId());
+    }
+
+    @NonNull
+    public static synchronized List<FeedItem> getQueue(long queueId) {
+        Log.d(TAG, "getQueue() called with: queueId = [" + queueId + "]");
 
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getQueueCursor())) {
+        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getQueueCursor(queueId))) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadFeedDataOfFeedItemList(items);
             return items;
+        } finally {
+            adapter.close();
+        }
+    }
+
+    public static synchronized long getActiveQueueId() {
+        long queueId = UserPreferences.getActiveQueueId();
+        if (queueId == Queue.DEFAULT_QUEUE_ID) {
+            return queueId;
+        }
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        try {
+            return adapter.queueExists(queueId) ? queueId : Queue.DEFAULT_QUEUE_ID;
+        } finally {
+            adapter.close();
+        }
+    }
+
+    @NonNull
+    public static synchronized List<Queue> getQueues() {
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        try (Cursor cursor = adapter.getQueuesCursor()) {
+            List<Queue> queues = new ArrayList<>(cursor.getCount() + 1);
+            queues.add(new Queue(Queue.DEFAULT_QUEUE_ID, null));
+            while (cursor.moveToNext()) {
+                queues.add(new Queue(cursor.getLong(0), cursor.getString(1)));
+            }
+            return queues;
+        } finally {
+            adapter.close();
+        }
+    }
+
+    @NonNull
+    public static synchronized LongList getQueuedItemIds(long... itemIds) {
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        try (Cursor cursor = adapter.getQueuedItemIdsCursor(itemIds)) {
+            LongList queuedItemIds = new LongList(cursor.getCount());
+            while (cursor.moveToNext()) {
+                queuedItemIds.add(cursor.getLong(0));
+            }
+            return queuedItemIds;
         } finally {
             adapter.close();
         }
@@ -415,7 +467,7 @@ public final class DBReader {
         Log.d(TAG, "getNextInQueue() called with: " + "itemId = [" + item.getId() + "]");
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getNextInQueue(item))) {
+        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getNextInQueue(getActiveQueueId(), item))) {
             List<FeedItem> list = extractItemlistFromCursor(cursor);
             if (!list.isEmpty()) {
                 FeedItem nextItem = list.get(0);
@@ -434,7 +486,7 @@ public final class DBReader {
     public static synchronized List<FeedItem> getPausedQueue(int limit) {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getPausedQueueCursor(limit))) {
+        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getPausedQueueCursor(getActiveQueueId(), limit))) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadFeedDataOfFeedItemList(items);
             return items;
@@ -742,7 +794,7 @@ public final class DBReader {
         }
 
         Collections.sort(feeds, comparator);
-        final int queueSize = adapter.getQueueSize();
+        final int queueSize = adapter.getQueueSize(getActiveQueueId());
         final int numNewItems = getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW));
         final int numDownloadedItems = getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
 

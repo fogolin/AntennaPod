@@ -9,7 +9,8 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 public class QueueEvent {
 
     public enum Action {
-        ADDED, ADDED_ITEMS, SET_QUEUE, REMOVED, IRREVERSIBLE_REMOVED, CLEARED, DELETED_MEDIA, SORTED, MOVED
+        ADDED, ADDED_ITEMS, SET_QUEUE, REMOVED, IRREVERSIBLE_REMOVED, CLEARED, DELETED_MEDIA, SORTED, MOVED,
+        QUEUES_CHANGED
     }
 
     public final Action action;
@@ -54,5 +55,9 @@ public class QueueEvent {
 
     public static QueueEvent moved(FeedItem item, int newPosition) {
         return new QueueEvent(Action.MOVED, item, null, newPosition);
+    }
+
+    public static QueueEvent queuesChanged() {
+        return new QueueEvent(Action.QUEUES_CHANGED, null, null, -1);
     }
 }

@@ -15,6 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.queue.Queue;
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueueStub;
@@ -148,7 +149,7 @@ public class DbCleanupTests {
         adapter.open();
         adapter.setCompleteFeed(feed);
         if (addToQueue) {
-            adapter.setQueue(items);
+            adapter.setQueue(Queue.DEFAULT_QUEUE_ID, items);
         }
         if (addToFavorites) {
             adapter.setFavorites(items);

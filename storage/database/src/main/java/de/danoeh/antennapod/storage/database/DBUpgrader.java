@@ -2,6 +2,7 @@ package de.danoeh.antennapod.storage.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.util.Log;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.queue.Queue;
 
 import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
 
@@ -354,6 +356,32 @@ class DBUpgrader {
                     + " ADD COLUMN " + PodDBAdapter.KEY_SOCIAL_INTERACT_URL + " TEXT");
             db.execSQL("DELETE FROM " + PodDBAdapter.TABLE_NAME_FAVORITES + " WHERE " + PodDBAdapter.KEY_FEEDITEM
                     + " NOT IN (SELECT " + PodDBAdapter.KEY_ID + " FROM " + PodDBAdapter.TABLE_NAME_FEED_ITEMS + ")");
+        }
+    }
+
+    static void upgradeMultipleQueues(final SQLiteDatabase db) {
+        if (db.isReadOnly()) {
+            return;
+        }
+        if (!hasColumn(db, PodDBAdapter.TABLE_NAME_QUEUE, PodDBAdapter.KEY_QUEUE)) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_QUEUE
+                    + " ADD COLUMN " + PodDBAdapter.KEY_QUEUE + " INTEGER DEFAULT " + Queue.DEFAULT_QUEUE_ID);
+        }
+        if (DatabaseUtils.queryNumEntries(db, "sqlite_master", "type = 'table' AND name = ?",
+                new String[]{PodDBAdapter.TABLE_NAME_QUEUES}) == 0) {
+            db.execSQL(PodDBAdapter.CREATE_TABLE_QUEUES);
+        }
+    }
+
+    private static boolean hasColumn(final SQLiteDatabase db, final String table, final String column) {
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+            int nameIndex = cursor.getColumnIndexOrThrow("name");
+            while (cursor.moveToNext()) {
+                if (column.equals(cursor.getString(nameIndex))) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
