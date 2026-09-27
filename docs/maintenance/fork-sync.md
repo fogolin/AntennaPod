@@ -9,18 +9,47 @@ upstream  https://github.com/AntennaPod/AntennaPod     (official)
 
 ## What to track
 
-- `develop` in the fork mirrors `upstream/develop` and is only ever fast-forwarded.
-- `multiple-queues` follows **upstream releases**, not every `develop` commit. Releases come every one to two months (3.10.2 through 3.12.2 in the last year) and are tested. That means about 6–10 syncs a year.
+- `develop` in the fork mirrors upstream `develop` and is only ever fast-forwarded.
+- `multiple-queues` follows upstream **`develop`**, weekly. That's the user's choice (ADR-0009), and it's also what the fork was built on.
 
-## Sync procedure
+## Automatic sync (phase 4)
+
+`.github/workflows/fork-sync.yml` runs every Monday at 06:23 São Paulo time, and from **Actions → Fork upstream sync → Run workflow**:
+
+1. It merges upstream `develop` into a copy of `multiple-queues`, then builds and runs the unit tests and checkstyle. It uses a read-only token.
+2. It fast-forwards the fork's `develop` and points `sync/upstream` at the tested upstream commit.
+3. It opens or updates **one** PR, `sync/upstream` → `multiple-queues`. The PR says whether the checks passed and lists the upstream commits.
+4. **The user reviews and merges.** The merge triggers `fork-release.yml`, so a new app release follows.
+
+**Prerequisites** (one time):
+- The fork's default branch is `multiple-queues`.
+- "Allow GitHub Actions to create and approve pull requests" is on.
+
+**Full checks:** PRs opened by the workflow don't start `checks.yml` (lint and emulator tests) on their own. Close and reopen the PR to run them.
+
+**Don't use GitHub's "Sync fork" button** on `multiple-queues`. It merges upstream straight into the branch, with no tests and no PR.
+
+### When the sync PR reports conflicts
+
+The workflow can't resolve conflicts. The PR shows GitHub's conflict banner and lists the files. Ask Claude to resolve them. Claude will:
 
 ```sh
-git fetch upstream --tags
+git fetch origin
+git checkout -B sync/upstream origin/sync/upstream
+git merge origin/multiple-queues      # resolve using the hotspots below
+git push origin sync/upstream         # the PR updates, and checks.yml runs, since this push isn't the workflow's
+```
+
+The next scheduled run sees commits on `sync/upstream` that aren't upstream's and leaves the branch alone, so the resolution survives until the PR is merged.
+
+## Manual sync (fallback)
+
+```sh
+git fetch upstream
 git checkout develop && git merge --ff-only upstream/develop && git push origin develop
-git checkout -b sync/<upstream-tag> multiple-queues
-git merge <upstream-tag>              # or upstream/develop for the latest
-# resolve conflicts, see the hotspots below
-git push origin sync/<upstream-tag>   # open a PR into multiple-queues; CI builds and tests it
+git checkout -b sync/manual origin/multiple-queues
+git merge upstream/develop            # resolve conflicts, see the hotspots below
+git push origin sync/manual           # open a PR into multiple-queues; CI builds and tests it
 ```
 
 A **merge** is used rather than a rebase, so `multiple-queues` keeps a readable history and the PRs of earlier phases stay valid.
