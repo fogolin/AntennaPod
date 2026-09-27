@@ -25,7 +25,7 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
 |---|---|
 | `develop` | Mirror of upstream `develop`. Never committed to directly. |
 | `multiple-queues` | Integration branch: the fork's "product" branch. Phases are merged here after they have been tested. |
-| `mq/phase-N-<name>` | One branch per phase, cut from `multiple-queues`. It is opened as a PR into `multiple-queues` so CI builds an APK for testing. |
+| `mq/phase-N-<name>` | One branch per phase, cut from `multiple-queues`, or from the previous phase branch while that one is awaiting approval. It is opened as a PR so CI builds an APK for testing. |
 
 ## Workflow per phase
 
@@ -36,7 +36,7 @@ This folder documents everything done in this fork on top of upstream [AntennaPo
 5. Performance, reuse and simplification review, written to `perf/phase-N.md`. Improvements are applied in the same phase.
 6. Push and open a PR into `multiple-queues`. CI (the upstream `checks.yml`) runs checkstyle, lint, the unit tests and emulator tests, and uploads `app-play-debug.apk`.
 7. The user tests the APK against the checklist in the phase log.
-8. Merge, then start the next phase.
+8. **Only the user approves and merges PRs.** Nothing is merged into `multiple-queues` without their approval. The next phase branch is stacked on the previous phase branch until that one is merged.
 
 ## Index
 

@@ -1,6 +1,6 @@
 # Phase 0: setup
 
-- **Branch:** `mq/phase-0-setup`, merged into `multiple-queues`
+- **Branch:** `mq/phase-0-setup`, as a PR into `multiple-queues`. It awaits the user's approval, since the user approves every PR.
 - **Date:** 2026-09-26
 - **Code changes:** none (documentation only)
 
