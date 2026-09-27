@@ -250,6 +250,25 @@ public final class DBReader {
         }
     }
 
+    public static boolean hasCustomQueues() {
+        return PodDBAdapter.hasCustomQueues();
+    }
+
+    @NonNull
+    public static synchronized LongList getQueueIdsOfItems(long... itemIds) {
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        try (Cursor cursor = adapter.getQueueIdsOfItemsCursor(itemIds)) {
+            LongList queueIds = new LongList(cursor.getCount());
+            while (cursor.moveToNext()) {
+                queueIds.add(cursor.getLong(0));
+            }
+            return queueIds;
+        } finally {
+            adapter.close();
+        }
+    }
+
     @NonNull
     public static synchronized LongList getQueuedItemIds(long... itemIds) {
         PodDBAdapter adapter = PodDBAdapter.getInstance();

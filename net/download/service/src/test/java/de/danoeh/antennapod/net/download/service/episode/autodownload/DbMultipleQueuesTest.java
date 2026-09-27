@@ -19,6 +19,7 @@ import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueueStub;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.FeedDatabaseWriter;
+import de.danoeh.antennapod.storage.database.LongList;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -303,6 +304,55 @@ public class DbMultipleQueuesTest {
         DBWriter.deleteQueue(queueId).get(TIMEOUT, TimeUnit.SECONDS);
 
         assertEquals(Queue.ACTIVE_QUEUE_ID, DBReader.getFeed(feedId, false, 0, 0).getPreferences().getQueueId());
+    }
+
+    @Test
+    public void testMoveToQueue() throws Exception {
+        long queueId = insertQueue("Second");
+        setQueue(Queue.DEFAULT_QUEUE_ID, items.get(0), items.get(1));
+        setQueue(queueId, items.get(2));
+
+        DBWriter.moveToQueue(context, queueId, items.get(0), items.get(2)).get(TIMEOUT, TimeUnit.SECONDS);
+        DBWriter.addQueueItem(context).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueue(Queue.DEFAULT_QUEUE_ID, items.get(1));
+        assertQueue(queueId, items.get(2), items.get(0));
+    }
+
+    @Test
+    public void testMoveToActiveQueue() throws Exception {
+        long queueId = insertQueue("Second");
+        setQueue(queueId, items.get(0));
+
+        DBWriter.moveToQueue(context, Queue.DEFAULT_QUEUE_ID, items.get(0)).get(TIMEOUT, TimeUnit.SECONDS);
+        DBWriter.addQueueItem(context).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueue(queueId);
+        assertQueue(Queue.DEFAULT_QUEUE_ID, items.get(0));
+        assertTrue(DBReader.getFeedItem(items.get(0).getId()).isTagged(FeedItem.TAG_QUEUE));
+    }
+
+    @Test
+    public void testGetQueueIdsOfItems() {
+        long queueId = insertQueue("Second");
+        setQueue(Queue.DEFAULT_QUEUE_ID, items.get(0));
+        setQueue(queueId, items.get(1), items.get(2));
+
+        LongList queueIds = DBReader.getQueueIdsOfItems(items.get(0).getId(), items.get(1).getId(),
+                items.get(2).getId(), items.get(3).getId());
+        assertEquals(2, queueIds.size());
+        assertTrue(queueIds.contains(Queue.DEFAULT_QUEUE_ID));
+        assertTrue(queueIds.contains(queueId));
+        assertEquals(0, DBReader.getQueueIdsOfItems(items.get(3).getId()).size());
+    }
+
+    @Test
+    public void testHasCustomQueuesFollowsCreateAndDelete() throws Exception {
+        DBWriter.createQueue("Second").get(TIMEOUT, TimeUnit.SECONDS);
+        assertTrue(DBReader.hasCustomQueues());
+
+        DBWriter.deleteQueue(DBReader.getQueues().get(1).id).get(TIMEOUT, TimeUnit.SECONDS);
+        assertFalse(DBReader.hasCustomQueues());
     }
 
     @Subscribe

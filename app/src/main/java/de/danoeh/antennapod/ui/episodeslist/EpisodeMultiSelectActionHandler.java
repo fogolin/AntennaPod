@@ -22,6 +22,7 @@ import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.SynchronizationSettings;
+import de.danoeh.antennapod.ui.screen.queue.QueuePickerDialog;
 import de.danoeh.antennapod.ui.share.ShareDialog;
 import de.danoeh.antennapod.ui.view.LocalDeleteModal;
 
@@ -43,6 +44,10 @@ public class EpisodeMultiSelectActionHandler {
             queueChecked(items);
         } else if (actionId == R.id.remove_from_queue_item) {
             removeFromQueueChecked(items);
+        } else if (actionId == R.id.add_to_other_queue_item) {
+            queueCheckedInChosenQueue(items);
+        } else if (actionId == R.id.move_to_other_queue_item) {
+            moveCheckedToChosenQueue(items);
         } else if (actionId == R.id.remove_inbox_item) {
             removeFromInboxChecked(items);
         } else if (actionId == R.id.mark_read_item) {
@@ -80,6 +85,26 @@ public class EpisodeMultiSelectActionHandler {
         }
         DBWriter.addQueueItem(activity, toQueue.toArray(new FeedItem[0]));
         showMessage(R.plurals.added_to_queue_message, toQueue.size());
+    }
+
+    private void queueCheckedInChosenQueue(List<FeedItem> items) {
+        List<FeedItem> toQueue = new ArrayList<>();
+        for (FeedItem episode : items) {
+            if (episode.hasMedia() && !episode.isTagged(FeedItem.TAG_QUEUE)) {
+                toQueue.add(episode);
+            }
+        }
+        new QueuePickerDialog(activity, R.string.add_to_queue_label, getSelectedIds(toQueue), queue -> {
+            DBWriter.addQueueItem(activity, queue.id, toQueue.toArray(new FeedItem[0]));
+            showMessage(R.plurals.added_to_queue_message, toQueue.size());
+        }).show();
+    }
+
+    private void moveCheckedToChosenQueue(List<FeedItem> items) {
+        new QueuePickerDialog(activity, R.string.move_to_queue_label, getSelectedIds(items), queue -> {
+            DBWriter.moveToQueue(activity, queue.id, items.toArray(new FeedItem[0]));
+            showMessage(R.plurals.moved_to_queue_message, items.size());
+        }).show();
     }
 
     private void removeFromQueueChecked(List<FeedItem> items) {
