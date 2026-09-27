@@ -66,6 +66,7 @@ These are the files this feature changes, with upstream commits over the last 12
 | `DBWriter` | 8 |
 | `ui/screen/queue` | 8 |
 | `UserPreferences` | 5 |
+| Phase 6: `FeedItemMenuHandler`, `EpisodeMultiSelectActionHandler`, the three episode menus | 1 each |
 | Phase 5: `FeedPreferences`, `FeedPreferencesCursor`, `FeedDatabaseWriter`, `DownloadServiceInterfaceImpl`, `FeedSettingsPreferenceFragment`, `feed_settings.xml` | 1 each |
 
 Most conflicts will be neighbouring-line edits. The ones that need care:

@@ -12,5 +12,6 @@
 | [0008](ADR-0008-fork-release-builds.md) | Fork release builds: replace the official app, play flavor, signed GitHub Releases | accepted |
 | [0009](ADR-0009-upstream-sync.md) | Weekly upstream sync with GitHub Actions and a single sync PR | accepted |
 | [0010](ADR-0010-podcast-queue.md) | Each podcast can send its automatic adds to a chosen queue | accepted, amends 0005 |
+| [0011](ADR-0011-queue-picker.md) | "Add to queue…" and "Move to queue…" with a queue picker | accepted |
 
 **Format.** Each record has a status, a context, a decision and its consequences. Records are never rewritten. To change a decision, add a new ADR that supersedes the old one, and update this table.
