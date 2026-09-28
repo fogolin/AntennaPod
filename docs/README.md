@@ -70,6 +70,7 @@ Every PR gets labels. Upstream's labels don't come with a fork, so the fork uses
   - [upstream research](findings/upstream-research.md)
   - [codebase map](findings/codebase-map.md)
   - [environment](findings/environment.md)
+  - [gap review, 2026-09-28](findings/gap-review.md)
 - Reviews:
   - security: [phase 1](security/phase-1.md), [phase 2](security/phase-2.md), [phase 3](security/phase-3.md), [phase 4](security/phase-4.md), [phase 5](security/phase-5.md), [phase 6](security/phase-6.md)
   - performance: [phase 1](perf/phase-1.md), [phase 2](perf/phase-2.md), [phase 3](perf/phase-3.md), [phase 4](perf/phase-4.md), [phase 5](perf/phase-5.md), [phase 6](perf/phase-6.md)
