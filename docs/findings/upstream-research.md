@@ -14,6 +14,7 @@ Collected on 2026-09-26. The full requirement table with sources is §1 of the [
 | PR #8718 | Fetched from GitHub | Approved PR that bumps DB `VERSION` to 3130000. Relevant for migrations. |
 | Forum: needs-decision thread (post 34), multiple-queues design thread (2023) | Fetched | The team liked #8066's UX but wants a human implementer. keunes' 2023 feature mapping. |
 | Repo `AGENTS.md`, `CONTRIBUTING.md`, PR template, code-style page | Read | Minimal diff, no comments, English strings only, checkstyle/lint/spotbugs, tests for core features. |
+| Issues #1611, #2908, #4739, #5095; forum 2670 (#15), 3211, 8635, 415 (added 2026-09-28) | Fetched | See [gap-review.md](gap-review.md). ByteHamster, 2026-09-28: UX design and a think-aloud study come before code. Keep it short, not a long AI-written plan. |
 
 ## State of the earlier attempts
 

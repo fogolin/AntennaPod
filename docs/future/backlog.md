@@ -14,7 +14,13 @@ These items are deferred on purpose. Each one needs its own discussion before it
 | ~~"Move to queue…" / choose the queue when adding~~ | Done in phase 6 as extra actions ([ADR-0011](../decisions/ADR-0011-queue-picker.md)). |
 | "New queue…" inside the queue picker | Left out in phase 6. Creating a queue also activates it today, which a picker flow shouldn't do. |
 | Per-queue keep-sorted, sort order, lock and enqueue location | keunes expects each queue to keep its own settings. v1 keeps them global (ADR-0006, D4). |
-| Show the active queue on the player screen, notification and widget, and switch from there | keunes' indicator list. |
+| Show the active queue on the player screen, notification and widget, and switch from there | keunes' indicator list. Gap review A1: the top priority, since it's ByteHamster's first question. |
+| Name the queue in "Added to …" messages and on the episode screen | Gap review A2. |
+| A short UX proposal and a think-aloud study with the fork's APK | Gap review A3, ByteHamster 2026-09-28. |
+| Moving a podcast's queued episodes when its queue setting changes | Gap review B4, ByteHamster 2019 (#3221). |
+| Delete a queue and move its episodes to another queue | Gap review B5, Igor 2023. |
+| Playlists that keep played episodes | Gap review B6. A different concept from a queue. |
+| Translations of the fork's texts | Gap review B11. Would need fork-only files so the upstream translation files stay untouched. |
 | Android Auto and Wear: browse all queues | v1 exposes the active queue only. Coordinate with upstream PR #8466. |
 | Queue rotation (continue with queue B when A is empty) | kjetilk's use case. It would build on continuous playback. |
 | Rename the default queue | ADR-0003. Needs a row or a preference. |
